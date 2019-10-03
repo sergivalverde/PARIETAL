@@ -80,7 +80,7 @@ Performance evaluation against the 12 manual masks from the Campinas dasaset.  V
 
 *** LPBA40 dataset:
 
-Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al.bb 2019]] paper:
+Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
 
 | method                               |  Dice | Sensitivity | Specificity |
 |--------------------------------------+-------+-------------+-------------|
@@ -140,6 +140,6 @@ Computing times from all methods but ROBEX and PARIETAL have been extracted from
 
 2. Lucena, O., Souza, R., Rittner, L., Frayne, R., & Lotufo, R. (2019). Convolutional neural networks for skull-stripping in brain MR imaging using silver standard masks. Artificial Intelligence in Medicine, 98(August 2018), 48–58. [[ https://doi.org/10.1016/j.artmed.2019.06.008][(link)]]
 
-** TODO
+** Things to do
 - implement =batch_mode= for faster processing
 - check processing times on CPU
