@@ -1,15 +1,18 @@
 *  PARIETAL
 PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL
 
+** Why another skull-stripping method?
+During the last years, we have happily use each of the already available tools that have been proposed. However, these methods are not always accurate enough for our needs or when accurate, they are slow for fast inference. Hopefully, several brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset, permitting researchers to train deep learning models that hopefully will reduce both the accuracy and time drawbacks.
+
+In this aspect, several deep learning method have been already proposed for accurate brain extraction. PARIETAL is another one, trying to perform a fast and protocol independent skull extraction. Our qualitative and quantitative experiments show a high performance on different datasets, even without retraining on unseen protocols.
 
 
 ** Installation
-PARIETAL uses the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip=" as follows:
+PARIETAL uses the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip= as follows:
 
 #+begin_src python
 pip install -r requirements
 #+end_src
-
 
 ** How to use it:
 In order to run the PARIETAL model, just run =python run_skull.py --help= to see all the available options:
@@ -29,5 +32,19 @@ python run_skull.py --help
 - trained model (=--model=): Trained model to use to perform the inference (default: Campinas model)
 - verbose (=--verbose=): show useful information
 
+*** GPU vs CPU use:
+The model can run with both GPU or a decent CPU. In most of the experiments performed, PARIETAL can perform the brain extraction of a T1-w image in less than 10 seconds when using GPU and about 2 minutes when running on the CPU (see performance experiments for a more complete performance analysis).
+
+** Performance:
+We have compared the performance of PARIETAL with several state-of-the-art tools already available and also with respect to some other deep learning methods. In other to do so, we have run PARIETAL on different public available datasets such as [[version%5B%5Bhttps://www.cms.gov/Medicare/Quality-Initiatives-Patient-Assessment-Instruments/HomeHealthQualityInits/OASIS-Data-Sets.html%5D][OASIS]], [[https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=2ahUKEwjZ9d-Sg4DlAhWD4YUKHVMZBAwQFjAAegQIAhAB&url=https%253A%252F%252Fresource.loni.usc.edu%252Fresources%252Fatlases-downloads%252F&usg=AOvVaw0DZWbz6xyqZRTFODIrDdpT][LBPA40]] and the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset.
+
+*** Campinas dataset:
+
+The Campinas dataset
+
 ** Versions:
  - v0.1: first usable version
+
+** References
+
+1. Lucena, O., Souza, R., Rittner, L., Frayne, R., & Lotufo, R. (2019). Convolutional neural networks for skull-stripping in brain MR imaging using silver standard masks. Artificial Intelligence in Medicine, 98(August 2018), 48–58. [[ https://doi.org/10.1016/j.artmed.2019.06.008][(link)]]
