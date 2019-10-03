@@ -17,7 +17,7 @@ pip install -r requirements
 ** How to use it:
 In order to run the PARIETAL model, just run =python run_skull.py --help= to see all the available options:
 
-#+begin_src bash
+#+begin_SEC bash
 python run_skull.py --help
 #+end_src
 
@@ -33,18 +33,39 @@ python run_skull.py --help
 - verbose (=--verbose=): show useful information
 
 *** GPU vs CPU use:
-The model can run with both GPU or a decent CPU. In most of the experiments performed, PARIETAL can perform the brain extraction of a T1-w image in less than 10 seconds when using GPU and about 2 minutes when running on the CPU (see performance experiments for a more complete performance analysis).
+The model can run with both GPU or a decent CPU. In most of the experiments performed, PARIETAL can perform the brain extraction of a T1-w image in less than 10 seconds when using GPU and about 2 minutes when running on the CPU (see performance experiments for a more complete analysis).
 
 ** Performance:
-We have compared the performance of PARIETAL with several state-of-the-art tools already available and also with respect to some other deep learning methods. In other to do so, we have run PARIETAL on different public available datasets such as [[version%5B%5Bhttps://www.cms.gov/Medicare/Quality-Initiatives-Patient-Assessment-Instruments/HomeHealthQualityInits/OASIS-Data-Sets.html%5D][OASIS]], [[https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=2ahUKEwjZ9d-Sg4DlAhWD4YUKHVMZBAwQFjAAegQIAhAB&url=https%253A%252F%252Fresource.loni.usc.edu%252Fresources%252Fatlases-downloads%252F&usg=AOvVaw0DZWbz6xyqZRTFODIrDdpT][LBPA40]] and the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset.
+We have compared the performance of PARIETAL with several state-of-the-art tools already available and also with respect to some other deep learning methods. In other to do so, we have run PARIETAL on different public available datasets such as [[http://www.oasis-brains.org/][OASIS]], [[https://resource.loni.usc.edu/resources/atlases-downloads/][LBPA40]] and the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset.
 
 *** Campinas dataset:
 
-The Campinas dataset
+Values for the rest of the skull stripping methods are extracted from the Lucena et al. 2019 paper:
+
+| method           |  Dice | Sensitivity | Specificity |
+|------------------+-------+-------------+-------------|
+| [[https://github.com/ANTsX/ANTs][ANTs]]             | 95.93 |       94.51 |       99.70 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]]            | 95.77 |       93.84 |       99.76 |
+| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]]              | 95.22 |       98.26 |       99.13 |
+| [[http://brainsuite.org/processing/surfaceextraction/bse/][BSE]]              | 90.48 |       91.44 |       98.64 |
+| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]              | 91.66 |       99.93 |       97.83 |
+| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]            | 95.57 |       92.78 |       99.48 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]          | 95.43 |       96.13 |       99.37 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]            | 95.61 |       98.42 |       99.13 |
+| STAPLE(previous) | 96.80 |       98.98 |       99.38 |
+| [[http://dx.doi.org/10.1016/j.neuroimage.2017.08.021][Silver-masks]]     | 97.13 |       96.82 |       99.70 |
+|------------------+-------+-------------+-------------|
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]]          | 97.18 |       98.91 |       99.46 |
+| PARIETAL         | 97.20 |       96.80 |       97.80 |
+|------------------+-------+-------------+-------------|
+
+
 
 ** Versions:
  - v0.1: first usable version
 
 ** References
 
-1. Lucena, O., Souza, R., Rittner, L., Frayne, R., & Lotufo, R. (2019). Convolutional neural networks for skull-stripping in brain MR imaging using silver standard masks. Artificial Intelligence in Medicine, 98(August 2018), 48–58. [[ https://doi.org/10.1016/j.artmed.2019.06.008][(link)]]
+1. Souza, R., Lucena, O., Garrafa, J., Gobbi, D., Saluzzi, M., Appenzeller, S., … Lotufo, R. (2017). An open, multi-vendor, multi-field-strength brain MR dataset and analysis of publicly available skull stripping methods agreement. NeuroImage, 170, 482–494. [[https://doi.org/10.1016/j.neuroimage.2017.08.021%20][(link)]]
+
+2. Lucena, O., Souza, R., Rittner, L., Frayne, R., & Lotufo, R. (2019). Convolutional neural networks for skull-stripping in brain MR imaging using silver standard masks. Artificial Intelligence in Medicine, 98(August 2018), 48–58. [[ https://doi.org/10.1016/j.artmed.2019.06.008][(link)]]
