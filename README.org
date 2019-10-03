@@ -6,14 +6,14 @@ During the last years, we have happily use each of the already available tools t
 
 In this aspect, several deep learning method have been already proposed for accurate brain extraction. PARIETAL is another one, trying to perform a fast and protocol independent skull extraction. Our qualitative and quantitative experiments show a high performance on different datasets, even without retraining on unseen protocols.
 
-** Architecture
+** Architecture:
 PARIETAL is based on patch based residual [[http://arxiv.org/abs/1606.06650][3D-UNET]] (see figure). Initially, it has been trained using the =silver-masks= provided by the
 [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset. The dataset is composed of 359 images of older healthy adults (29-80 years) acquired on Siemens, Philips and General Electric at both 1.5T and 3T (see Souza et al. 2017) for more information about the dataset. In all the experiments, inference has been performed using the trained model on the Campinas dataset, *analyzing the capability of the learned architecture on unseen data and image protocols and*.
 
 [[media/unet_architecture.png]]
 
 *** Training/inference Characteristics:
-- Input modalities: =T1="
+- Input modalities: =T1=
 - Training patch size: =32x32x32=
 - Training sampling: balanced training, same number of brain and skull samples (non-brain) after sampling at =16x16x16=
 - Optimizer: =Adadelta=
@@ -24,7 +24,7 @@ PARIETAL is based on patch based residual [[http://arxiv.org/abs/1606.06650][3D-
 - Inference patch size: =32x32x32=
 - Inference sampling: =16x16x16=
 
-** Installation
+** Installation:
 PARIETAL uses the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip= as follows:
 
 #+begin_src python
@@ -109,7 +109,7 @@ Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Val
 
 Finally, we analyze the processing time (in seconds) of the proposed architecture against other methods in the field. For the PARIETAL method, we show the processing times with/without loading the model in the GPU for each new example. This is the case when the model is not used in =batch mode= (to implement).
 
-Computing times from all methods but ROBEX and PARIETAL have been extracted from the same [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper.
+Computing times from all methods but PARIETAL have been extracted from the same [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper, where the authors report the use of a workstation equipped with a =Xeon E3-1220 v3, 4x3.10Ghz, Intel)=. GPU resources are the identical in all the deep learning methods (=NVIDIA TITAN-X GPU, 12GB)=.
 
 
 | method                        | Campinas | OASIS | LPBA40 |
@@ -121,25 +121,25 @@ Computing times from all methods but ROBEX and PARIETAL have been extracted from
 | [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]                           |      846 |   248 |    281 |
 | [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]                         |      135 |    66 |     79 |
 | [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]                       |      773 |   579 |    679 |
-| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]                         |       -- |    -- |    197 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]                         |       60 |    53 |     57 |
 |-------------------------------+----------+-------+--------|
 | [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (GPU)                 |       25 |    18 |     36 |
 | CONSNet (CPU)                 |      516 |   214 |    301 |
 |-------------------------------+----------+-------+--------|
-| *PARIETAL* (GPU)              |      12  |    7  |      9 |
-| *PARIETAL* (GPU + model load) |      17  |    12 |     14 |
-| *PARIETAL* (CPU)              |      -   |    -  |     -  |
+| *PARIETAL* (GPU)              |       12 |     7 |      9 |
+| *PARIETAL* (GPU + model load) |       17 |    12 |     14 |
+| *PARIETAL* (CPU)              |        - |     - |      - |
 |-------------------------------+----------+-------+--------|
 
 ** Versions:
  - v0.1: first usable version
 
-** References
+** References:
 
 1. Souza, R., Lucena, O., Garrafa, J., Gobbi, D., Saluzzi, M., Appenzeller, S., … Lotufo, R. (2017). An open, multi-vendor, multi-field-strength brain MR dataset and analysis of publicly available skull stripping methods agreement. NeuroImage, 170, 482–494. [[https://doi.org/10.1016/j.neuroimage.2017.08.021%20][(link)]]
 
 2. Lucena, O., Souza, R., Rittner, L., Frayne, R., & Lotufo, R. (2019). Convolutional neural networks for skull-stripping in brain MR imaging using silver standard masks. Artificial Intelligence in Medicine, 98(August 2018), 48–58. [[ https://doi.org/10.1016/j.artmed.2019.06.008][(link)]]
 
-** Things to do
+** Things to do:
 - implement =batch_mode= for faster processing
 - check processing times on CPU
