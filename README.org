@@ -1,0 +1,33 @@
+*  PARIETAL
+PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL
+
+
+
+** Installation
+PARIETAL uses the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip=" as follows:
+
+#+begin_src python
+pip install -r requirements
+#+end_src
+
+
+** How to use it:
+In order to run the PARIETAL model, just run =python run_skull.py --help= to see all the available options:
+
+#+begin_src bash
+python run_skull.py --help
+#+end_src
+
+*** Mandatory parameters:
+- input_image (=--input_image=): T1 nifti image to process
+- out_name (=--out_name=): Output name for the skull-stripped image
+
+*** Optional parameters:
+- binary threshold (=--threshold=): output threshold used to binarize the skull-stripped image (default=0.5)
+- gpu use (=--gpu=): use GPU for faster inference (default=No)
+- gpu number (=--gpu_number=): Which GPU number to use (default=0)
+- trained model (=--model=): Trained model to use to perform the inference (default: Campinas model)
+- verbose (=--verbose=): show useful information
+
+** Versions:
+ - v0.1: first usable version
