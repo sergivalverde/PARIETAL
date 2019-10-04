@@ -1,5 +1,5 @@
 *  PARIETAL
-PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL
+PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL :dancers::dancers:
 
 ** Why another skull-stripping method?
 During the last years, we have been happily using each of the available skull-stripping tools proposed. However, in some circumstances these methods may be not accurate enough for our needs or may be slow for fast processing. Hopefully, several brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset, permitting researchers to train deep learning models that hopefully will reduce both the accuracy and time drawbacks.
@@ -125,7 +125,7 @@ Similar to the previous datasets, we also show the performance of PARIETAL again
 | *PARIETAL* (Campinas model)         | 92.55 |       87.40 |       98.51 |
 |-------------------------------------+-------+-------------+-------------|
 
-In contrast to the previous datasets, OASIS masks were not manually annotated, so the results of PARIETAL using the Campinas trained model were poor, mostly due to inconsistencies of the OASIS masks (see Figure):
+In contrast to the previous datasets, OASIS masks were not manually annotated, so the results of PARIETAL using the Campinas trained model were poor, mostly due to inconsistencies of the OASIS masks :man_shrugging: (see Figure):
 
 [[media/oasis_masks.png]]
 
