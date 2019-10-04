@@ -1,19 +1,18 @@
-*  PARIETAL
+* PARIETAL
 PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL :dancers::dancers:
 
 ** Why another skull-stripping method?
-During the last years, we have been happily using each of the available skull-stripping tools proposed. However, in some circumstances these methods may be not accurate enough for our needs or may be slow for fast processing. Hopefully, several brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset, permitting researchers to train deep learning models that hopefully will reduce both the accuracy and time drawbacks.
+During the last years, we have been using available skull-stripping tools happily. However, these methods may not be accurate enough in some scenarios or may be considerably slow. Fortunately, various brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset, permitting researchers to train deep learning models that will hopefully improve both performance and processing times.
 
-In this aspect, several deep learning methods have been already proposed for accurate brain extraction. PARIETAL is another one, yielding a fast and accurate independent image protocol brain extraction. Our qualitative and quantitative experiments show a high performance on different datasets, even without retraining on unseen image protocols.
+Several deep learning methods have been proposed already for accurate brain extraction. PARIETAL is another one, yielding fast and accurate outputs, regardless of the imaging brain extraction protocol. Our qualitative and quantitative experiments show high performance on different datasets, even without retraining on unseen image protocols.
 
 ** Architecture:
-PARIETAL is based on a patch based residual [[http://arxiv.org/abs/1606.06650][3D-UNET]] (see figure). The model has been trained using the =silver-masks= provided by the
-[[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset. This dataset is composed of 359 images of older healthy adults (29-80 years) acquired on Siemens, Philips and General Electric scanners at both 1.5T and 3T (see Souza et al. 2017 for more information about the dataset). In all the experiments, inference has been performed using the trained model on the Campinas dataset, *analyzing the capability of the learned architecture on unseen data and image protocols*.
+PARIETAL is a patch-based residual network [[http://arxiv.org/abs/1606.06650][3D-UNET]] (see figure). We have trained the model using the =silver-masks= provided by the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset. This dataset consists of 359 images of healthy adults (29-80 years) acquired on Siemens, Philips and General Electric scanners at both 1.5T and 3T (see Souza et al. 2017 for more information about the dataset). We have carried the experiments out using the trained model on the Campinas dataset, *analyzing the capability of the learned architecture on unseen data and varied image acquisition protocols*.
 
 [[media/unet_architecture.png]]
 
 *** Training/inference characteristics:
-- Input modalities: =T1=
+- Input modalities: =T1-w=
 - Training patch size: =32x32x32=
 - Training sampling: balanced training, same number of brain and skull samples (non-brain) after sampling at =16x16x16=
 - Optimizer: =Adadelta=
@@ -25,80 +24,80 @@ PARIETAL is based on a patch based residual [[http://arxiv.org/abs/1606.06650][3
 - Inference sampling: =16x16x16=
 
 ** Installation:
-PARIETAL is implemented in [[www.python.org][Python]] using the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip= as follows:
+We implemented PARIETAL in [[www.python.org][Python]] using the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip= as follows:
 
 #+begin_src python
 pip install -r requirements
 #+end_src
 
 ** How to use it:
-In order to run the PARIETAL model, just run =python run_skull.py --help= to see all the available options:
+To use the PARIETAL model, just run =python run_skull.py --help= to see all the available options:
 
 #+begin_SEC bash
 python run_skull.py --help
 #+end_src
 
 *** Mandatory parameters:
-- input_image (=--input_image=): T1 nifti image to process
+- input_image (=--input_image=): T1-w nifti image to process
 - out_name (=--out_name=): Output name for the skull-stripped image
 
 *** Optional parameters:
 - binary threshold (=--threshold=): output threshold used to binarize the skull-stripped image (default=0.5)
 - gpu use (=--gpu=): use GPU for faster inference (default=No)
-- gpu number (=--gpu_number=): Which GPU number to use (default=0)
-- trained model (=--model=): Trained model to use to perform the inference (default: Campinas model)
+- gpu number (=--gpu_number=): which GPU number to use (default=0)
+- trained model (=--model=): trained model to use during inference (default: Campinas model)
 - verbose (=--verbose=): show useful information
 
 *** GPU vs CPU use:
-The model can run with both GPU or a decent CPU. In most of the experiments performed, PARIETAL can perform the brain extraction of a T1-w image in less than 10 seconds when using GPU and about 2 minutes when running on the CPU (see performance experiments for a more complete analysis).
+The model can run with both GPU or a decent CPU. In most of our experiments, PARIETAL can extract the brain out of T1-w image in less than 10 seconds when using GPU and about 2 minutes when running on the CPU (see performance experiments for a more complete analysis).
 
 ** Performance:
-We have compared the performance of PARIETAL with several state-of-the-art tools already available and also with respect to some other deep learning methods. In other to do so, we have run PARIETAL on different public available datasets such as [[http://www.oasis-brains.org/][OASIS]], [[https://resource.loni.usc.edu/resources/atlases-downloads/][LPBA40]] and the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset.
+We have compared the performance of PARIETAL with several publicly available state-of-the-art tools and also against some other deep learning methods. To do so, we have run PARIETAL on different public available datasets such as [[http://www.oasis-brains.org/][OASIS]], [[https://resource.loni.usc.edu/resources/atlases-downloads/][LPBA40]] and the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset.
 
 *** Campinas dataset:
 
-Performance evaluation against the 12 manual masks from the Campinas dasaset.  Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
+Performance evaluation against the 12 manual masks from the Campinas dasaset. We extract values for other methods from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
 
-| method             |  Dice | Sensitivity | Specificity |
+| method | Dice | Sensitivity | Specificity |
 |--------------------+-------+-------------+-------------|
-| [[https://github.com/ANTsX/ANTs][ANTs]]               | 95.93 |       94.51 |       99.70 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]]              | 95.77 |       93.84 |       99.76 |
-| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]]                | 95.22 |       98.26 |       99.13 |
-| [[http://brainsuite.org/processing/surfaceextraction/bse/][BSE]]                | 90.48 |       91.44 |       98.64 |
-| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]                | 91.66 |       99.93 |       97.83 |
-| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]              | 95.57 |       92.78 |       99.48 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]            | 95.43 |       96.13 |       99.37 |
-| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]              | 95.61 |       98.42 |       99.13 |
-| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]]  | 96.80 |       98.98 |       99.38 |
+| [[https://github.com/ANTsX/ANTs][ANTs]] | 95.93 | 94.51 | 99.70 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]] | 95.77 | 93.84 | 99.76 |
+| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]] | 95.22 | 98.26 | 99.13 |
+| [[http://brainsuite.org/processing/surfaceextraction/bse/][BSE]] | 90.48 | 91.44 | 98.64 |
+| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]] | 91.66 | 99.93 | 97.83 |
+| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]] | 95.57 | 92.78 | 99.48 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]] | 95.43 | 96.13 | 99.37 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]] | 95.61 | 98.42 | 99.13 |
+| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]] | 96.80 | 98.98 | 99.38 |
 |--------------------+-------+-------------+-------------|
-| [[http://dx.doi.org/10.1016/j.neuroimage.2017.08.021][Silver-masks]]       | 97.13 |       96.82 |       99.70 |
+| [[http://dx.doi.org/10.1016/j.neuroimage.2017.08.021][Silver-masks]] | 97.13 | 96.82 | 99.70 |
 |--------------------+-------+-------------+-------------|
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]]            | 97.18 |       98.91 |       99.46 |
-| *PARIETAL*         | 97.20 |       96.80 |       97.80 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] | 97.18 | 98.91 | 99.46 |
+| *PARIETAL* | 97.20 | 96.80 | 97.80 |
 |--------------------+-------+-------------+-------------|
 
 
 *** LPBA40 dataset:
 
-Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
+Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
 
-| method                               |  Dice | Sensitivity | Specificity |
+| method | Dice | Sensitivity | Specificity |
 |--------------------------------------+-------+-------------+-------------|
-| [[https://github.com/ANTsX/ANTs][ANTs]]                                 | 97.25 |       98.98 |       99.17 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]]                                | 96.30 |       94.06 |       99.76 |
-| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]]                                  | 96.62 |       97.23 |       99.27 |
-| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]                                  | 92.51 |       99.89 |       97.02 |
-| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]                                | 96.24 |       94.40 |       99.68 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]                              | 95.87 |       93.35 |       99.74 |
-| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]                                | 96.77 |       96.50 |       99.50 |
-| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]]                    | 97.59 |       98.14 |       99.46 |
+| [[https://github.com/ANTsX/ANTs][ANTs]] | 97.25 | 98.98 | 99.17 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]] | 96.30 | 94.06 | 99.76 |
+| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]] | 96.62 | 97.23 | 99.27 |
+| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]] | 92.51 | 99.89 | 97.02 |
+| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]] | 96.24 | 94.40 | 99.68 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]] | 95.87 | 93.35 | 99.74 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]] | 96.77 | 96.50 | 99.50 |
+| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]] | 97.59 | 98.14 | 99.46 |
 |--------------------------------------+-------+-------------+-------------|
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model)             | 97.35 |       98.14 |       99.45 |
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on LPBA40)          | 98.47 |       98.55 |       99.75 |
-| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on LPBA40) | 97.73 |       98.31 |       99.48 |
-| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on LPBA40)]]      | 96.79 |       97.22 |       99.34 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]]  (trained on LPBA40)  | 96.96 |       97.46 |       99.41 |
-| *PARIETAL* (Campinas model)          | 97.25 |       96.10 |       98.40 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model) | 97.35 | 98.14 | 99.45 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on LPBA40) | 98.47 | 98.55 | 99.75 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on LPBA40) | 97.73 | 98.31 | 99.48 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on LPBA40)]] | 96.79 | 97.22 | 99.34 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]] (trained on LPBA40) | 96.96 | 97.46 | 99.41 |
+| *PARIETAL* (Campinas model) | 97.25 | 96.10 | 98.40 |
 |--------------------------------------+-------+-------------+-------------|
 
 *** OASIS dataset
@@ -106,72 +105,71 @@ Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Val
 Similar to the previous datasets, we also show the performance of PARIETAL against the 77 brainmasks of the OASIS dataset. Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
 
 
-| method                              |  Dice | Sensitivity | Specificity |
+| method | Dice | Sensitivity | Specificity |
 |-------------------------------------+-------+-------------+-------------|
-| [[https://github.com/ANTsX/ANTs][ANTs]]                                | 95.30 |       94.39 |       98.73 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]]                               | 92.46 |       86.76 |       99.70 |
-| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]]                                 | 93.50 |       92.63 |       98.10 |
-| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]                                 | 93.95 |       98.36 |       96.12 |
-| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]                               | 90.24 |       84.09 |       99.35 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]                             | 94.45 |       91.51 |        9.22 |
-| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]                               | 95.55 |       93.95 |       99.06 |
-| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]]                   | 96.09 |       95.18 |       98.98 |
+| [[https://github.com/ANTsX/ANTs][ANTs]] | 95.30 | 94.39 | 98.73 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]] | 92.46 | 86.76 | 99.70 |
+| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]] | 93.50 | 92.63 | 98.10 |
+| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]] | 93.95 | 98.36 | 96.12 |
+| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]] | 90.24 | 84.09 | 99.35 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]] | 94.45 | 91.51 | 9.22 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]] | 95.55 | 93.95 | 99.06 |
+| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]] | 96.09 | 95.18 | 98.98 |
 |-------------------------------------+-------+-------------+-------------|
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model)            | 95.54 |       93.98 |       99.05 |
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on OASIS)          | 97.14 |       97.45 |       98.88 |
-| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on OASIS) | 97.62 |       98.66 |       98.77 |
-| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on OASIS)]]      | 96.22 |       97.29 |       98.27 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]]  (trained on OASIS)  | 95.02 |       92.40 |       99.28 |
-| *PARIETAL* (Campinas model)         | 92.55 |       87.40 |       98.51 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model) | 95.54 | 93.98 | 99.05 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on OASIS) | 97.14 | 97.45 | 98.88 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on OASIS) | 97.62 | 98.66 | 98.77 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on OASIS)]] | 96.22 | 97.29 | 98.27 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]] (trained on OASIS) | 95.02 | 92.40 | 99.28 |
+| *PARIETAL* (Campinas model) | 92.55 | 87.40 | 98.51 |
 |-------------------------------------+-------+-------------+-------------|
 
-In contrast to the previous datasets, OASIS masks were not manually annotated, so the results of PARIETAL using the Campinas trained model were poor, mostly due to inconsistencies of the OASIS masks :man_shrugging: (see Figure):
+In contrast to the previous datasets, OASIS masks were not manually annotated, so the results of PARIETAL using the Campinas trained model were limited, mostly due to inconsistencies between labelling protocols :man_shrugging: (see Figure):
 
 [[media/oasis_masks.png]]
 
+To further illustrate such an issue, we retrained the model using the 77 brain masks of the OASIS dataset using a two-fold cross-validation methodology. We followed the same approach done in Kleesiek et al. 2016, Salehi et al. 2017 and Lucena et al. 2019, i.e. a two-fold cross-validation strategy for assessing our model. After retraining, the performance of PARIETAL was similar or better than other deep learning methods:
 
-With the aim of investigating the apparent lack of performance of the architecture previously trained on The Campinas dataset, we retrained the model using the 77 brain masks of the OASIS dataset using a 2-fold cross-validation methodology, following the same approach done in Kleesiek et al. 2016, Salehi et al. 2017 and Lucena et al. 2019. After retraining, the performance of PARIETAL was similar or better to the rest of deep learning methods:
-
-| method                              |  Dice | Sensitivity | Specificity |
+| method | Dice | Sensitivity | Specificity |
 |-------------------------------------+-------+-------------+-------------|
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model)            | 95.54 |       93.98 |       99.05 |
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on OASIS)          | 97.14 |       97.45 |       98.88 |
-| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on OASIS) | 97.62 |       98.66 |       98.77 |
-| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on OASIS)]]      | 96.22 |       97.29 |       98.27 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]]  (trained on OASIS)  | 95.02 |       92.40 |       99.28 |
-| *PARIETAL* (Campinas model)         | 92.55 |       87.40 |       98.51 |
-| *PARIETAL* (trained on OASIS)       | 97.99 |       97.84 |       98.14 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model) | 95.54 | 93.98 | 99.05 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on OASIS) | 97.14 | 97.45 | 98.88 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on OASIS) | 97.62 | 98.66 | 98.77 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on OASIS)]] | 96.22 | 97.29 | 98.27 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]] (trained on OASIS) | 95.02 | 92.40 | 99.28 |
+| *PARIETAL* (Campinas model) | 92.55 | 87.40 | 98.51 |
+| *PARIETAL* (trained on OASIS) | 97.99 | 97.84 | 98.14 |
 |-------------------------------------+-------+-------------+-------------|
 
 
 *** Processing time:
 
-Finally, we analyze the processing time (in seconds) of the proposed architecture against other methods in the field. For the PARIETAL method, we show the processing times with/without loading the model in the GPU for each new example. This is the case when the model is not used in =batch mode= (to implement).
+Finally, we analyze the processing time (in seconds) of the proposed architecture against other methods in the field. For the PARIETAL method, we show the processing times with/without loading the model in the GPU for each new sample. This is the case when the model is not used in =batch mode= (to implement).
 
-Computing times from all methods but PARIETAL have been extracted from the same [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper, where the authors report the use of a workstation equipped with a =Xeon E3-1220 v3, 4x3.10Ghz, Intel)=. GPU resources are the identical in all the deep learning methods (=NVIDIA TITAN-X GPU, 12GB)=.
+Processing times from all methods, but PARIETAL, have been extracted from [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper, where the authors report the use of a workstation equipped with a =Xeon E3-1220 v3, 4x3.10Ghz, Intel)=. GPU resources are identical for all the deep learning methods (=NVIDIA TITAN-X GPU, 12GB)=.
 
 
-| method                        | Campinas | OASIS | LPBA40 |
+| method | Campinas | OASIS | LPBA40 |
 |-------------------------------+----------+-------+--------|
-| [[https://github.com/ANTsX/ANTs][ANTs]]                          |     1378 |  1025 |   1135 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]]                         |     1128 |   944 |    905 |
-| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]]                           |        9 |     5 |      7 |
-| [[http://brainsuite.org/processing/surfaceextraction/bse/][BSE]]                           |        2 |     1 |      1 |
-| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]                           |      846 |   248 |    281 |
-| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]                         |      135 |    66 |     79 |
-| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]                       |      773 |   579 |    679 |
-| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]                         |       60 |    53 |     57 |
+| [[https://github.com/ANTsX/ANTs][ANTs]] | 1378 | 1025 | 1135 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]] | 1128 | 944 | 905 |
+| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]] | 9 | 5 | 7 |
+| [[http://brainsuite.org/processing/surfaceextraction/bse/][BSE]] | 2 | 1 | 1 |
+| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]] | 846 | 248 | 281 |
+| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]] | 135 | 66 | 79 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]] | 773 | 579 | 679 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]] | 60 | 53 | 57 |
 |-------------------------------+----------+-------+--------|
-| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (GPU)                 |       25 |    18 |     36 |
-| CONSNet (CPU)                 |      516 |   214 |    301 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (GPU) | 25 | 18 | 36 |
+| CONSNet (CPU) | 516 | 214 | 301 |
 |-------------------------------+----------+-------+--------|
-| *PARIETAL* (GPU)              |       12 |     7 |      9 |
-| *PARIETAL* (GPU + model load) |       17 |    12 |     14 |
-| *PARIETAL* (CPU)              |      129 |   122 |    141 |
+| *PARIETAL* (GPU) | 12 | 7 | 9 |
+| *PARIETAL* (GPU + model load) | 17 | 12 | 14 |
+| *PARIETAL* (CPU) | 129 | 122 | 141 |
 |-------------------------------+----------+-------+--------|
 
 ** Versions:
- - v0.1: first usable version
+- v0.1: first usable version
 
 ** References:
 
