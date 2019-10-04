@@ -2,17 +2,17 @@
 PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL
 
 ** Why another skull-stripping method?
-During the last years, we have happily use each of the already available tools that have been proposed. However, these methods are not always accurate enough for our needs or when accurate, they are slow for fast inference. Hopefully, several brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Campinas]] dataset, permitting researchers to train deep learning models that hopefully will reduce both the accuracy and time drawbacks.
+During the last years, we have been happily using each of the available skull-stripping tools proposed. However, in some circumstances these methods may be not accurate enough for our needs or may be slow for fast processing. Hopefully, several brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset, permitting researchers to train deep learning models that hopefully will reduce both the accuracy and time drawbacks.
 
-In this aspect, several deep learning method have been already proposed for accurate brain extraction. PARIETAL is another one, trying to perform a fast and protocol independent skull extraction. Our qualitative and quantitative experiments show a high performance on different datasets, even without retraining on unseen protocols.
+In this aspect, several deep learning methods have been already proposed for accurate brain extraction. PARIETAL is another one, yielding a fast and accurate independent image protocol brain extraction. Our qualitative and quantitative experiments show a high performance on different datasets, even without retraining on unseen image protocols.
 
 ** Architecture:
-PARIETAL is based on patch based residual [[http://arxiv.org/abs/1606.06650][3D-UNET]] (see figure). Initially, it has been trained using the =silver-masks= provided by the
-[[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset. The dataset is composed of 359 images of older healthy adults (29-80 years) acquired on Siemens, Philips and General Electric at both 1.5T and 3T (see Souza et al. 2017) for more information about the dataset. In all the experiments, inference has been performed using the trained model on the Campinas dataset, *analyzing the capability of the learned architecture on unseen data and image protocols and*.
+PARIETAL is based on a patch based residual [[http://arxiv.org/abs/1606.06650][3D-UNET]] (see figure). The model has been trained using the =silver-masks= provided by the
+[[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset. This dataset is composed of 359 images of older healthy adults (29-80 years) acquired on Siemens, Philips and General Electric scanners at both 1.5T and 3T (see Souza et al. 2017 for more information about the dataset). In all the experiments, inference has been performed using the trained model on the Campinas dataset, *analyzing the capability of the learned architecture on unseen data and image protocols*.
 
 [[media/unet_architecture.png]]
 
-*** Training/inference Characteristics:
+*** Training/inference characteristics:
 - Input modalities: =T1=
 - Training patch size: =32x32x32=
 - Training sampling: balanced training, same number of brain and skull samples (non-brain) after sampling at =16x16x16=
@@ -25,7 +25,7 @@ PARIETAL is based on patch based residual [[http://arxiv.org/abs/1606.06650][3D-
 - Inference sampling: =16x16x16=
 
 ** Installation:
-PARIETAL uses the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip= as follows:
+PARIETAL is implemented in [[www.python.org][Python]] using the amazing [[www.pytorch.org][Pytorch]] deep learning toolkit. All necessary packages can be installed from =pip= as follows:
 
 #+begin_src python
 pip install -r requirements
@@ -103,7 +103,46 @@ Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Val
 
 *** OASIS dataset
 
-/In progress/
+Similar to the previous datasets, we also show the performance of PARIETAL against the 77 brainmasks of the OASIS dataset. Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
+
+
+| method                              |  Dice | Sensitivity | Specificity |
+|-------------------------------------+-------+-------------+-------------|
+| [[https://github.com/ANTsX/ANTs][ANTs]]                                | 95.30 |       94.39 |       98.73 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][BEAST]]                               | 92.46 |       86.76 |       99.70 |
+| [[https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET/UserGuide][BET]]                                 | 93.50 |       92.63 |       98.10 |
+| [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2408865/][HWA]]                                 | 93.95 |       98.36 |       96.12 |
+| [[https://www.frontiersin.org/articles/10.3389/fninf.2013.00032/full][MBWSS]]                               | 90.24 |       84.09 |       99.35 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916306176?via%253Dihub][OPTIBET]]                             | 94.45 |       91.51 |        9.22 |
+| [[https://sites.google.com/site/jeiglesias/ROBEX][ROBEX]]                               | 95.55 |       93.95 |       99.06 |
+| [[https://www.ncbi.nlm.nih.gov/pubmed/15250643][STAPLE (previous)]]                   | 96.09 |       95.18 |       98.98 |
+|-------------------------------------+-------+-------------+-------------|
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model)            | 95.54 |       93.98 |       99.05 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on OASIS)          | 97.14 |       97.45 |       98.88 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on OASIS) | 97.62 |       98.66 |       98.77 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on OASIS)]]      | 96.22 |       97.29 |       98.27 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]]  (trained on OASIS)  | 95.02 |       92.40 |       99.28 |
+| *PARIETAL* (Campinas model)         | 92.55 |       87.40 |       98.51 |
+|-------------------------------------+-------+-------------+-------------|
+
+In contrast to the previous datasets, OASIS masks were not manually annotated, so the results of PARIETAL using the Campinas trained model were poor, mostly due to inconsistencies of the OASIS masks (see Figure):
+
+[[media/oasis_masks.png]]
+
+
+With the aim of investigating the apparent lack of performance of the architecture previously trained on The Campinas dataset, we retrained the model using the 77 brain masks of the OASIS dataset using a 2-fold cross-validation methodology, following the same approach done in Kleesiek et al. 2016, Salehi et al. 2017 and Lucena et al. 2019. After retraining, the performance of PARIETAL was similar or better to the rest of deep learning methods:
+
+| method                              |  Dice | Sensitivity | Specificity |
+|-------------------------------------+-------+-------------+-------------|
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (Campinas model)            | 95.54 |       93.98 |       99.05 |
+| [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] (trained on OASIS)          | 97.14 |       97.45 |       98.88 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][auto UNET Salehi]] (trained on OASIS) | 97.62 |       98.66 |       98.77 |
+| [[https://ieeexplore.ieee.org/abstract/document/7961201][Unet Salehi (trained on OASIS)]]      | 96.22 |       97.29 |       98.27 |
+| [[https://www.sciencedirect.com/science/article/pii/S1053811916000306?via%253Dihub][3DCNN Kleesiek]]  (trained on OASIS)  | 95.02 |       92.40 |       99.28 |
+| *PARIETAL* (Campinas model)         | 92.55 |       87.40 |       98.51 |
+| *PARIETAL* (trained on OASIS)       | 97.99 |       97.84 |       98.14 |
+|-------------------------------------+-------+-------------+-------------|
+
 
 *** Processing time:
 
@@ -128,7 +167,7 @@ Computing times from all methods but PARIETAL have been extracted from the same 
 |-------------------------------+----------+-------+--------|
 | *PARIETAL* (GPU)              |       12 |     7 |      9 |
 | *PARIETAL* (GPU + model load) |       17 |    12 |     14 |
-| *PARIETAL* (CPU)              |        - |     - |      - |
+| *PARIETAL* (CPU)              |      129 |   122 |    141 |
 |-------------------------------+----------+-------+--------|
 
 ** Versions:
@@ -140,6 +179,9 @@ Computing times from all methods but PARIETAL have been extracted from the same 
 
 2. Lucena, O., Souza, R., Rittner, L., Frayne, R., & Lotufo, R. (2019). Convolutional neural networks for skull-stripping in brain MR imaging using silver standard masks. Artificial Intelligence in Medicine, 98(August 2018), 48–58. [[ https://doi.org/10.1016/j.artmed.2019.06.008][(link)]]
 
+3. Sadegh, S., Salehi, M., Member, S., Erdogmus, D., Member, S., Gholipour, A., & Member, S. (2017). Auto-context Convolutional Neural Network (Auto-Net) for Brain Extraction in Magnetic Resonance Imaging, 0062(c), 1–12. [[https://doi.org/10.1109/TMI.2017.2721362%20][(link)]]
+
+4. Kleesiek, J., Urban, G., Hubert, A., Schwarz, D., Maier-Hein, K., Bendszus, M., & Biller, A. (2016). Deep MRI brain extraction: A 3D convolutional neural network for skull stripping. NeuroImage, 129, 460–469. [[https://doi.org/10.1016/j.neuroimage.2016.01.024][(link)]]
+
 ** Things to do:
 - implement =batch_mode= for faster processing
-- check processing times on CPU

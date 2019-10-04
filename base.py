@@ -137,6 +137,7 @@ def train_skull_model(options):
                          patch_shape=options['train_patch_shape'],
                          scale=options['scale'],
                          model_name=options['experiment'],
+                         gpu_mode=options['use_gpu'],
                          gpu_list=options['gpus'])
 
     skull_net.load_weights()
@@ -164,6 +165,7 @@ def run_skull_model(options):
                          model_name=options['experiment'],
                          model_path=model_path,
                          scale=options['scale'],
+                         gpu_mode=options['use_gpu'],
                          gpu_list=options['gpus'])
 
     if options['verbose']:
@@ -174,6 +176,7 @@ def run_skull_model(options):
     print("done")
     # perform inference
     infer_image(skull_net, options)
+    # test_on_batch(skull_net, options)
 
 def infer_image(net, options):
     """

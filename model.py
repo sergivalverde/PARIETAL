@@ -146,6 +146,7 @@ class SkullNet(nn.Module):
                  batch_size=32,
                  train_split=0.3,
                  model_name=None,
+                 gpu_mode=True,
                  gpu_list=[0],
                  use_bn=False,
 
@@ -199,8 +200,10 @@ class SkullNet(nn.Module):
         #     self.device = torch.device('cuda:' + str(gpu_list[0]))
         #     self.parallel = True
 
-        self.device = torch.device('cuda:' + str(gpu_list[0]))
-        # self.device = torch.device('cpu')
+        if gpu_mode:
+            self.device = torch.device('cuda:' + str(gpu_list[0]))
+        else:
+            self.device = torch.device('cpu')
 
         self.gpu_list = gpu_list
 
