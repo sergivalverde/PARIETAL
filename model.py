@@ -173,10 +173,10 @@ class SkullNet(nn.Module):
         self.model_name = model_name
         self.use_bn = use_bn
         self.resume_training = resume_training
-
+        self.gpu_mode = gpu_mode
         # model path
         if model_path is None:
-            self.model_path = os.getcwd()
+            self.model_path = os.path.join(os.getcwd(), 'models')
         else:
             self.model_path = model_path
 
@@ -200,7 +200,7 @@ class SkullNet(nn.Module):
         #     self.device = torch.device('cuda:' + str(gpu_list[0]))
         #     self.parallel = True
 
-        if gpu_mode:
+        if self.gpu_mode:
             self.device = torch.device('cuda:' + str(gpu_list[0]))
         else:
             self.device = torch.device('cpu')
@@ -386,10 +386,11 @@ class SkullNet(nn.Module):
         """
         save the best net state
         """
-        if os.path.exists(os.path.join(self.model_path, 'models')) is False:
-            os.mkdir(os.path.join(self.model_path, 'models'))
+        #if os.path.exists(os.path.join(self.model_path, 'models')) is False:
+        #    os.mkdir(os.path.join(self.model_path, 'models'))
 
-        filename = self.model_path + '/models/' + self.model_name
+        # filename = self.model_path + '/models/' + self.model_name
+        filename = os.path.join(self.model_path, self.model_name)
         torch.save(state, filename)
 
     def load_weights(self, model_name=None):
@@ -405,17 +406,23 @@ class SkullNet(nn.Module):
 
         self.skull_net = self.skull_net.to(self.device)
 
+        # remap weights if CPU: necessary for Docker
+        map_location = 'cuda' if self.gpu_mode else 'cpu'
+
         # load weights
-        filename = self.model_path + '/models/' + self.model_name
+        # filename = self.model_path + '/models/' + self.model_name
+        filename = os.path.join(self.model_path, self.model_name)
+
         # filename = './models/' + self.model_name
         # print("--------------------------------------------------")
         if os.path.isfile(filename):
-            checkpoint = torch.load(filename)
+            checkpoint = torch.load(filename, map_location=map_location)
             # check if the network was trained using data parallelism
             if checkpoint['data_parallel']:
                 self.skull_net = nn.DataParallel(self.skull_net)
             # load weights
             self.skull_net.load_state_dict(checkpoint['state_dict_les'])
+
             # print("=> loaded weights '{}'".format(self.model_name))
         else:
             print("=> no checkpoint found at '{}'".format(self.model_name))

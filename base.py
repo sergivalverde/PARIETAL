@@ -159,11 +159,12 @@ def run_skull_model(options):
     options['test_patch_shape'] = (32, 32, 32)
     options['test_step'] = (16, 16, 16)
 
-    model_path = os.path.dirname(os.path.abspath( __file__ ))
+    # model_path = os.path.dirname(os.path.abspath( __file__ ))
+
     skull_net = SkullNet(input_channels=options['input_channels'],
                          patch_shape=options['train_patch_shape'],
                          model_name=options['experiment'],
-                         model_path=model_path,
+                         model_path=options['model_path'],
                          scale=options['scale'],
                          gpu_mode=options['use_gpu'],
                          gpu_list=options['gpus'])
@@ -483,4 +484,8 @@ def show_info(options):
     print("input image: ", options['input_data'][0])
     print("Output image: ", options['out_name'])
     print("GPU using:", options['use_gpu'])
+    print(" ")
+    print("Model information")
+    print("Model path:", options['model_path'])
+    print("Model name:", options['experiment'])
     print("--------------------------------------------------")

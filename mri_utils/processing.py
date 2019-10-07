@@ -88,7 +88,7 @@ def histogram_matching(mov_scan, ref_scan,
     return sitk.GetArrayFromImage(matched_vol)
 
 
-def n4_normalization(input_scan, max_iters=400, levels=1):
+def n4_normalization(input_scan, mask=None, max_iters=400, levels=1):
     """
     N4ITK: Improved N3 Bias Correction, Tustison et al. 2010)
 
@@ -105,7 +105,11 @@ def n4_normalization(input_scan, max_iters=400, levels=1):
     scan = sitk.GetImageFromArray(input_scan.astype('float32'))
 
     # process the input image
-    mask = sitk.OtsuThreshold(scan, 0, 1, 200)
+    if mask is None:
+        mask = sitk.OtsuThreshold(scan, 0, 1, 200)
+    else:
+        mask = sitk.GetImageFromArray(mask.astype('uint8'))
+
     corrector = sitk.N4BiasFieldCorrectionImageFilter()
     corrector.SetMaximumNumberOfIterations([max_iters] * levels)
     output = corrector.Execute(scan, mask)
