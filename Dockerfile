@@ -1,4 +1,4 @@
-FROM sergivalverde/pytorch:1.0.0_cuda9_medical
+FROM sergivalverde/pytorch:1.2.0_cuda9_2_medical
 MAINTAINER Sergi Valverde <svalverde@eia.udg.edu>
 
 
