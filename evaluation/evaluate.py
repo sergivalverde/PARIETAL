@@ -22,7 +22,7 @@ import argparse
 
 def parseargs():
     parser = argparse.ArgumentParser(description="Evaluate BIOMARKEM patients")
-    parser.add_argument('-i', help='Main path to images', required=True, type=str, nargs='+')
+    parser.add_argument('-i', help='Main path to images', required=True, type=str)
     parser.add_argument('-type', help='Healthy or itinerant', required=True, type=str)
 
     return parser.parse_args()
