@@ -373,16 +373,16 @@ print('scan', '|',
       'PARIETAL TR', '|',
       'PARIETAL VH', '|',
       'ACCUM PARIETAL', '|',
-      'CONSNET IAS/TR', '|',
-      'CONSNET IAS/VH', '|',
-      'CONSNET VH/TR', '|',
+      'CONSNET IAS', '|',
+      'CONSNET TR', '|',
+      'CONSNET VH', '|',
       'ACCUM CONSNET', '|'
       )
 
 file = open('vol_diff_scanrescan.csv', 'w')
-file.write('scan, BET IAS/TR, BET IAS/VH, BET VH/TR, ACCUM BET, ROBEX IAS/TR, ROBEX IAS/VH, ROBEX VH/TR, ACCUM ROBEX, '
-           'PARIETAL IAS/TR, PARIETAL IAS/VH, PARIETAL VH/TR, ACCUM PARIETAL, CONSNET IAS/TR, CONSNET IAS/VH, CONSNET '
-           'VH/TR, ACCUM CONSNET')
+file.write('scan, BET IAS, BET TR, BET VH, ACCUM BET, ROBEX IAS, ROBEX TR, ROBEX VH, ACCUM ROBEX, '
+           'PARIETAL IAS, PARIETAL TR, PARIETAL VH, ACCUM PARIETAL, CONSNET IAS, CONSNET TR, CONSNET '
+           'VH, ACCUM CONSNET')
 file.write('\n')
 for index in range(0, len(scans), 2):
     b = index
@@ -476,16 +476,16 @@ print('scan', '|',
       'PARIETAL TR', '|',
       'PARIETAL VH', '|',
       'ACCUM PARIETAL', '|',
-      'CONSNET IAS/TR', '|',
-      'CONSNET IAS/VH', '|',
-      'CONSNET VH/TR', '|',
+      'CONSNET IAS', '|',
+      'CONSNET TR', '|',
+      'CONSNET VH', '|',
       'ACCUM CONSNET', '|'
       )
 
 file = open('percent_diff_scanrescan.csv', 'w')
-file.write('scan, BET IAS/TR, BET IAS/VH, BET VH/TR, ACCUM BET, ROBEX IAS/TR, ROBEX IAS/VH, ROBEX VH/TR, ACCUM ROBEX, '
-           'PARIETAL IAS/TR, PARIETAL IAS/VH, PARIETAL VH/TR, ACCUM PARIETAL, CONSNET IAS/TR, CONSNET IAS/VH, CONSNET '
-           'VH/TR, ACCUM CONSNET')
+file.write('scan, BET IAS, BET TR, BET VH, ACCUM BET, ROBEX IAS, ROBEX TR, ROBEX VH, ACCUM ROBEX, '
+           'PARIETAL IAS, PARIETAL TR, PARIETAL VH, ACCUM PARIETAL, CONSNET IAS, CONSNET TR, CONSNET '
+           'VH, ACCUM CONSNET')
 file.write('\n')
 
 for index in range(0, len(scans), 2):
