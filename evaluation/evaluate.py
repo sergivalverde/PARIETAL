@@ -1,5 +1,5 @@
 # --------------------------------------------------
-# Evaluate BIOMARKEM patients local
+# Evaluate BIOMARKEM 
 #
 # Sergi Valverde 2019
 # svalverdee@eia.udg.edu
@@ -21,15 +21,15 @@ import argparse
 
 
 def parseargs():
-    parser = argparse.ArgumentParser(description="Evaluate performance between ground truths and predictions")
+    parser = argparse.ArgumentParser(description="Evaluate BIOMARKEM patients")
     parser.add_argument('-i', help='Main path to images', required=True, type=str, nargs='+')
     parser.add_argument('-type', help='Healthy or itinerant', required=True, type=str)
 
     return parser.parse_args()
 
 
-# IMAGE_PATH = '/home/llucia/Documents/skull/pacients_itinerants/all'
-# IMAGE_PATH = '/home/llucia/Documents/skull/healthies/all'
+# IMAGE_PATH = './skull/pacients_itinerants/all'
+# IMAGE_PATH = './skull/healthies/all'
 args = parseargs()
 IMAGE_PATH = args.i
 scans = sorted(os.listdir(IMAGE_PATH))
