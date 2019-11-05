@@ -1,7 +1,6 @@
 FROM sergivalverde/pytorch:1.2.0_cuda10.1_medical
 MAINTAINER Sergi Valverde <svalverde@eia.udg.edu>
 
-
 # --------------------------------------------------
 # packages to install. See readme for a list of
 # included packages
