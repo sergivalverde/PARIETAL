@@ -5,16 +5,15 @@ import nibabel as nib
 import numpy as np
 import random
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from mri_utils.data_utils import reconstruct_image, extract_patches
 from mri_utils.data_utils import get_voxel_coordenates
 from mri_utils.processing import normalize_data, n4_normalization
 from model import SkullNet
-from scipy.ndimage import rotate
 from scipy.ndimage import binary_fill_holes as fill_holes
-from dataset import MRI_DataPatchLoader, MRI_DataImageLoader
+from dataset import MRI_DataPatchLoader
 from dataset import RotatePatch, FlipPatch
 from pyfiglet import Figlet
+
 
 def train_skull_model(options):
     """
@@ -80,8 +79,8 @@ def train_skull_model(options):
                       FlipPatch(0),
                       FlipPatch(180)]
 
-    if len(transform) > 0:
-        set_transforms = transforms.RandomChoice(transform)
+#     if len(transform) > 0:
+#         set_transforms = transforms.RandomChoice(transform)
 
     # dataset
     training_dataset = MRI_DataPatchLoader(input_data,
