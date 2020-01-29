@@ -252,7 +252,7 @@ def infer_image(net, options):
                                              options['out_name'] + '_brainmask.nii.gz'))
 
     # remove tmp file when finished
-    # shutil.rmtree(os.path.join(scan_path, 'tmp'))
+    shutil.rmtree(os.path.join(scan_path, 'tmp'))
     print("done")
     print('Elapsed time', np.round(time.time() - scan_time, 2), 'sec')
 
@@ -503,9 +503,11 @@ def register_brainmask_template_to_native(scan_path):
     # register the template against the original image
     im_orig = ants.image_read(scan_path)
     my_tx = ants.registration(im_orig,
-                              im_template)
+                              im_template,
+                              type_of_transform='Affine')
+
     # reg_iterations=(160, 80, 40))
-    # type_of_transform='Affine')
+    #
     warped_template = my_tx['warpedmovout']
 
     # apply the obtained transformation to the template_brainmask

@@ -61,7 +61,7 @@ if __name__ == "__main__":
             (im_path, im_name) = os.path.split(input_image)
             options['test_path'] = im_path
             options['input_data'] = [im_name]
-        else:n
+        else:
             (im_path, im_name) = os.path.split(input_image)
             options['test_path'] = os.path.join(os.getcwd(), im_path)
             options['input_data'] = [im_name]
