@@ -61,7 +61,7 @@ if __name__ == "__main__":
             (im_path, im_name) = os.path.split(input_image)
             options['test_path'] = im_path
             options['input_data'] = [im_name]
-        else:
+        else:n
             (im_path, im_name) = os.path.split(input_image)
             options['test_path'] = os.path.join(os.getcwd(), im_path)
             options['input_data'] = [im_name]
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             options['experiment'] = opt.model_path
     else:
         options['model_path'] = os.path.join(script_folder, 'models')
-        options['experiment'] = 'campinas_baseline'
+        options['experiment'] = 'campinas_baseline_hm'
 
     print(options['model_path'], options['experiment'])
     options['out_name'] = opt.out_name

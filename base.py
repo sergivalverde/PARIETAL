@@ -4,10 +4,12 @@ import time
 import nibabel as nib
 import numpy as np
 import random
+import ants
 from torch.utils.data import DataLoader
 from mri_utils.data_utils import reconstruct_image, extract_patches
 from mri_utils.data_utils import get_voxel_coordenates
 from mri_utils.processing import normalize_data, n4_normalization
+from mri_utils.processing import nyul_apply_standard_scale
 from model import SkullNet
 from scipy.ndimage import binary_fill_holes as fill_holes
 from dataset import MRI_DataPatchLoader
@@ -44,7 +46,6 @@ def train_skull_model(options):
         T1 = nib.load(current_scan)
         T1.get_data()[:] = compute_pre_mask(T1.get_data())
         T1.to_filename(os.path.join(image_path, 'tmp', options['roi_mask']))
-
 
     # move training scans to tmp a folder before building the MRI_PatchLoader
     for scan in list_scans:
@@ -178,6 +179,7 @@ def run_skull_model(options):
     infer_image(skull_net, options)
     # test_on_batch(skull_net, options)
 
+
 def infer_image(net, options):
     """
     Perform inference using data from testing folder on a single image
@@ -250,7 +252,7 @@ def infer_image(net, options):
                                              options['out_name'] + '_brainmask.nii.gz'))
 
     # remove tmp file when finished
-    shutil.rmtree(os.path.join(scan_path, 'tmp'))
+    # shutil.rmtree(os.path.join(scan_path, 'tmp'))
     print("done")
     print('Elapsed time', np.round(time.time() - scan_time, 2), 'sec')
 
@@ -406,7 +408,6 @@ def get_candidate_voxels(input_mask,  step_size, sel_method='all'):
     return candidate_voxels, voxel_coords
 
 
-
 def transform_canonical_to_orig(canonical, original):
     """
     Transform back a nifti file that has been moved to the canonical space
@@ -456,13 +457,79 @@ def transform_input_images(image_path, scan_names):
     if os.path.exists(tmp_folder) is False:
         os.mkdir(tmp_folder)
 
+    # Nyul normalization. we need a brainmask to improve normalization
+    # The CAMP351 brainmask registered against the T1 is used as a brain mask
+    normalization_hist = 'normalization/campinas_histogram.npy'
+    brainmask = register_brainmask_template_to_native(os.path.join(
+        image_path, scan_names[0]))
+
+    # normalize images
     for s in scan_names:
         current_scan = os.path.join(image_path, s)
         nifti_orig = nib.load(current_scan)
 
         nifti_orig.get_data()[:] = n4_normalization(nifti_orig.get_data())
+        nifti_orig.get_data()[:] = nyul_apply_standard_scale(nifti_orig.get_data(),
+                                                             normalization_hist,
+                                                             brainmask)
         t1_nifti_canonical = nib.as_closest_canonical(nifti_orig)
         t1_nifti_canonical.to_filename(os.path.join(tmp_folder, s))
+
+
+def register_brainmask_template_to_native(scan_path):
+    """
+    Transform input images for processing. Processed
+    images are stored in the tmp folder
+    - register CC351_t1_template to the native space. Using 'SyN' by default
+    - reshape the CC351_brainmask to the native space
+    """
+
+    current_script = get_current_path()
+    im_template = ants.image_read(os.path.join(current_script,
+                                               'campinas_template',
+                                               'CC351_nonlin_t1.nii.gz'))
+    brain_template = ants.image_read(
+        os.path.join(current_script,
+                     'campinas_template',
+                     'CC351_nonlin_brainmask.nii.gz'))
+
+    # check if tmp folder is available
+    (image_path, scan_name) = os.path.split(scan_path)
+
+    tmp_folder = os.path.join(image_path, 'tmp')
+    if os.path.exists(tmp_folder) is False:
+        os.mkdir(tmp_folder)
+
+    # register the template against the original image
+    im_orig = ants.image_read(scan_path)
+    my_tx = ants.registration(im_orig,
+                              im_template)
+    # reg_iterations=(160, 80, 40))
+    # type_of_transform='Affine')
+    warped_template = my_tx['warpedmovout']
+
+    # apply the obtained transformation to the template_brainmask
+    warped_brainmask = ants.apply_transforms(im_orig,
+                                             brain_template,
+                                             my_tx['fwdtransforms'])
+
+    # store the results
+    warped_brainmask.to_filename(os.path.join(image_path,
+                                              'tmp',
+                                              'template_brainmask.nii.gz'))
+    # store the results
+    warped_template.to_filename(os.path.join(image_path,
+                                             'tmp',
+                                             'template_t1.nii.gz'))
+
+    return warped_brainmask.numpy()
+
+
+def get_current_path():
+    """
+    Just get the path to where this script is
+    """
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def show_info(options):
