@@ -7,3 +7,5 @@ termcolor==1.1.0
 torch==1.1.0
 torchvision==0.3.0
 SimpleITK
+webcolors
+ants==0.1.4 (I don't know which is the correct version to work with ants; I'd to change some functions using this version, but I think it's the last one)
