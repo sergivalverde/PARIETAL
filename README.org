@@ -1,8 +1,9 @@
 * PARIETAL
+
 PARIETAL: Yet another deeP leARnIng brain ExTrAtion tooL :dancers::dancers:
 
 ** Why another skull-stripping method?
-During the last years, we have been using available skull-stripping tools happily. However, these methods may not be accurate enough in some scenarios or may be considerably slow. Fortunately, various brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset, permitting researchers to train deep learning models that will hopefully improve both performance and processing times.
+During the last years, we have been using available state-of-the-art skull-stripping tools happily. However, these methods may not be accurate enough in some scenarios or may be considerably slow. Fortunately, various brain MRI datasets have been released, such as the [[https://sites.google.com/view/calgary-campinas-dataset/home][Calgary-Campinas-359]] dataset, permitting researchers to train deep learning models that will hopefully improve both performance and processing times.
 
 Several deep learning methods have been proposed already for accurate brain extraction. PARIETAL is another one, yielding fast and accurate outputs, regardless of the imaging brain extraction protocol. Our qualitative and quantitative experiments show high performance on different datasets, even without retraining on unseen image protocols.
 
@@ -73,9 +74,8 @@ Performance evaluation against the 12 manual masks from the Campinas dasaset. We
 | [[http://dx.doi.org/10.1016/j.neuroimage.2017.08.021][Silver-masks]] | 97.13 | 96.82 | 99.70 |
 |--------------------+-------+-------------+-------------|
 | [[https://doi.org/10.1016/j.artmed.2019.06.008][CONSNet]] | 97.18 | 98.91 | 99.46 |
-| *PARIETAL* | 97.20 | 96.80 | 97.80 |
+| *PARIETAL* | 97.23 | 96.73 | 97.75 |
 |--------------------+-------+-------------+-------------|
-
 
 *** LPBA40 dataset:
 

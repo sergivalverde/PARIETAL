@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     # Training settings
     parser = argparse.ArgumentParser(
-        description= "PARIETAL: yet another deeP leARnIng brain ExTrAtion tooL")
+        description="PARIETAL: yet another deeP leARnIng brain ExTrAtion tooL")
     parser.add_argument('--input_image',
                         action='store',
                         help='T1 nifti image to process (mandatory)')
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             options['experiment'] = opt.model_path
     else:
         options['model_path'] = os.path.join(script_folder, 'models')
-        options['experiment'] = 'campinas_baseline_hm'
+        options['experiment'] = 'campinas_baseline_s2'
 
     print(options['model_path'], options['experiment'])
     options['out_name'] = opt.out_name

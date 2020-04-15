@@ -8,8 +8,7 @@ import ants
 from torch.utils.data import DataLoader
 from mri_utils.data_utils import reconstruct_image, extract_patches
 from mri_utils.data_utils import get_voxel_coordenates
-from mri_utils.processing import normalize_data, n4_normalization
-from mri_utils.processing import nyul_apply_standard_scale
+from mri_utils.processing import normalize_data
 from model import SkullNet
 from scipy.ndimage import binary_fill_holes as fill_holes
 from dataset import MRI_DataPatchLoader
@@ -36,7 +35,9 @@ def train_skull_model(options):
     print('PREPROCESSING DATA')
     print('--------------------------------------------------')
 
-    options['roi_mask'] = 'prebrainmask.nii.gz'
+    # options['roi_mask'] = 'prebrainmask.nii.gz'
+
+    '''
     for scan in list_scans:
         image_path = os.path.join(options['training_path'], scan)
         if os.path.exists(os.path.join(image_path, 'tmp')) is False:
@@ -46,10 +47,11 @@ def train_skull_model(options):
         T1 = nib.load(current_scan)
         T1.get_data()[:] = compute_pre_mask(T1.get_data())
         T1.to_filename(os.path.join(image_path, 'tmp', options['roi_mask']))
+    '''
 
     # move training scans to tmp a folder before building the MRI_PatchLoader
     for scan in list_scans:
-        scan_names = options['input_data'] + [options['out_scan']]
+        scan_names = options['input_data'] + [options['out_scan']] + [options['roi_mask']]
         current_scan = os.path.join(options['training_path'], scan)
         transform_input_images(current_scan, scan_names)
 
@@ -116,16 +118,15 @@ def train_skull_model(options):
                                 options['roi_mask'])]
             for scan in validation_data}
 
-    validation_dataset = MRI_DataPatchLoader(input_data,
-                                           labels,
-                                           rois,
-                                           patch_size=options['train_patch_shape'],
-                                           sampling_step=options['training_step'],
-                                           sampling_type=options['sampling_type'],
-                                           normalize=options['normalize'],
-                                           transform=set_transforms)
-
-
+    validation_dataset = MRI_DataPatchLoader(
+        input_data,
+        labels,
+        rois,
+        patch_size=options['train_patch_shape'],
+        sampling_step=options['training_step'],
+        sampling_type=options['sampling_type'],
+        normalize=options['normalize'],
+        transform=set_transforms)
 
     v_dataloader = DataLoader(validation_dataset,
                               batch_size=options['batch_size'],
@@ -154,7 +155,7 @@ def run_skull_model(options):
 
     options['normalize'] = True
     options['test_step'] = (16, 16, 16)
-    options['scale'] = 1
+    options['scale'] = 2
     options['train_patch_shape'] = (32, 32, 32)
     options['test_patch_shape'] = (32, 32, 32)
     options['test_step'] = (16, 16, 16)
@@ -194,21 +195,22 @@ def infer_image(net, options):
 
     scan_time = time.time()
 
-    # load input images and transform it to the canonical space
-    # all images are stored in a tmp folder
+    # 1. transform images to canonical space
+    # --------------------------------------------------
     transform_input_images(scan_path, options['input_data'])
 
-    # compute the ROI brain+skull
-    T1_scan = nib.load(os.path.join(scan_path, 'tmp', options['input_data'][0]))
-    T1_image = T1_scan.get_data()
-    mask_image = compute_pre_mask(T1_image)
+    # 2. get candidate voxels
+    # --------------------------------------------------
+    t1_tmp_path = os.path.join(scan_path,
+                               'tmp',
+                               options['input_data'][0])
 
-    # get candidate voxels
+    t1_nifti_canonical = nib.load(t1_tmp_path)
+    mask_image = compute_pre_mask(t1_nifti_canonical.get_data())
     ref_mask, ref_voxels = get_candidate_voxels(mask_image,
                                                 step,
                                                 sel_method='all')
 
-    # input images stacked as channels
     test_patches = get_data_channels(os.path.join(scan_path, 'tmp'),
                                      options['input_data'],
                                      ref_voxels,
@@ -216,9 +218,97 @@ def infer_image(net, options):
                                      step,
                                      normalize=options['normalize'])
 
-
+    # 3. predict skull
+    # --------------------------------------------------
     print("Predicting skull...", end=' '),
+    pred = net.test_net(test_patches)
 
+    # 4. reconstruction segmentation and save
+    # --------------------------------------------------
+    prob_skull = reconstruct_image(np.squeeze(pred),
+                                   ref_voxels,
+                                   ref_mask.shape)
+
+    # binarize the results and fill remaining holes
+    brainmask = prob_skull > options['out_threshold']
+    brainmask = fill_holes(brainmask)
+    # T1_skulled = T1_reg_image * brainmask
+
+    # bm_can_path = os.path.join(scan_path, 'tmp', 'brainmask_can.nii.gz')
+    # t1_nifti_canonical.get_data()[:] = brainmask
+    # t1_nifti_canonical.to_filename(bm_can_path)
+
+    brainmask_can = nib.Nifti1Image(brainmask.astype('<f4'),
+                                    affine=t1_nifti_canonical.affine)
+    brainmask_can.to_filename(os.path.join(scan_path,
+                                           'tmp',
+                                           'brainmask_can.nii.gz'))
+
+    T1_scan = nib.load(os.path.join(scan_path, options['input_data'][0]))
+    brainmask_nifti = transform_canonical_to_orig(brainmask_can,
+                                                  T1_scan)
+
+    brainmask_nifti.to_filename(os.path.join(scan_path,
+                                             options['out_name'] + '.nii.gz'))
+
+    # shutil.rmtree(os.path.join(scan_path, 'tmp'))
+    print("done")
+    print('Elapsed time', np.round(time.time() - scan_time, 2), 'sec')
+
+
+def infer_image_reg(net, options):
+    """
+    Perform inference using data from testing folder on a single image
+    Steps for each testing image:
+    - Load bathches
+    - Perform inference
+    - Reconstruct the output image
+    """
+    patch_shape = options['test_patch_shape']
+    step = options['test_step']
+    scan_path = options['test_path']
+
+    scan_time = time.time()
+
+    # load input images and transform it to the canonical space
+    # all images are stored in a tmp folder
+    # --------------------------------------------------
+    # 1. transform the images
+    # 2. register masks
+    # 3. process masks (skull)
+    # 4. invert registration
+    # --------------------------------------------------
+
+    # 1. register mask and store as
+    orig_scan = os.path.join(scan_path, options['input_data'][0])
+    T1_scan = nib.load(orig_scan)
+    my_tx = register_native_to_template(orig_scan)
+    my_tx['warpedmovout'].to_filename(
+        os.path.join(scan_path, 'tmp', 't1_reg.nii.gz'))
+
+    # 2. transform to cannonical
+    t1_reg = nib.load(os.path.join(scan_path, 'tmp', 't1_reg.nii.gz'))
+    t1_nifti_canonical = nib.as_closest_canonical(t1_reg)
+    t1_nifti_canonical.to_filename(os.path.join(
+        scan_path,
+        'tmp',
+        't1_reg_can.nii.gz'))
+
+    # 3. get candidate voxels
+    # input images stacked as channels
+    mask_image = compute_pre_mask(t1_nifti_canonical.get_data())
+    ref_mask, ref_voxels = get_candidate_voxels(mask_image,
+                                                step,
+                                                sel_method='all')
+    test_patches = get_data_channels(os.path.join(scan_path, 'tmp'),
+                                     ['t1_reg_can.nii.gz'],
+                                     ref_voxels,
+                                     patch_shape,
+                                     step,
+                                     normalize=options['normalize'])
+
+    # 4. predict skull
+    print("Predicting skull...", end=' '),
     pred = net.test_net(test_patches)
 
     # reconstruction segmentation
@@ -229,33 +319,41 @@ def infer_image(net, options):
     # binarize the results and fill remaining holes
     brainmask = prob_skull > options['out_threshold']
     brainmask = fill_holes(brainmask)
-    T1_skulled = T1_image * brainmask
+    # T1_skulled = T1_reg_image * brainmask
 
+    bm_reg_can_path = os.path.join(scan_path, 'tmp', 'brainmask_reg_can.nii.gz')
+    t1_nifti_canonical.get_data()[:] = brainmask
+    t1_nifti_canonical.to_filename(bm_reg_can_path)
+
+    brainmask_nifti = transform_canonical_to_orig(t1_nifti_canonical,
+                                                  t1_reg)
+
+    bm_reg_path = os.path.join(scan_path, 'tmp', 'brainmask_reg.nii.gz')
+    brainmask_nifti.to_filename(bm_reg_path)
 
     # we transform computed images back to the T1 original space
-    brainmask_nifti = nib.Nifti1Image(brainmask.astype('uint8'),
-                                     affine=T1_scan.affine)
-    T1_brain_nifti = nib.Nifti1Image(T1_skulled,
-                                     affine=T1_scan.affine)
-    T1_orig = nib.load(os.path.join(scan_path, options['input_data'][0]))
-    brainmask_nifti = transform_canonical_to_orig(brainmask_nifti,
-                                                  T1_orig)
-    T1_brain_nifti = transform_canonical_to_orig(T1_brain_nifti,
-                                                  T1_orig)
+    # brainmask_nifti = nib.Nifti1Image(brainmask.astype('uint8'),
+    #                                  affine=T1_scan.affine)
+    # T1_brain_nifti = nib.Nifti1Image(im,
+    #                                  affine=T1_org_can.affine)
+    # T1_orig = nib.load(os.path.join(scan_path, options['input_data'][0]))
+    # T1_brain_nifti = transform_canonical_to_orig(T1_brain_nifti,
+    #                                             T1_orig)
 
-    # save the results
-    T1_orig.get_data()[:] = T1_brain_nifti.get_data()
-    T1_orig.to_filename(os.path.join(scan_path,
-                                     options['out_name'] + '.nii.gz'))
-    T1_orig.get_data()[:] = brainmask_nifti.get_data()
-    T1_orig.to_filename(os.path.join(scan_path,
-                                             options['out_name'] + '_brainmask.nii.gz'))
+    # invert registration
+    # orig_scan = os.path.join(scan_path, options['input_data'][0])
+    im = transform_template_to_native(orig_scan,
+                                      os.path.join(scan_path,
+                                                   'tmp',
+                                                   't1_reg.nii.gz'),
+                                      bm_reg_can_path)
 
-    # remove tmp file when finished
-    shutil.rmtree(os.path.join(scan_path, 'tmp'))
+    T1_out = nib.Nifti1Image(im, affine=T1_scan.affine)
+    T1_out.to_filename(os.path.join(scan_path,
+                                    options['out_name'] + '.nii.gz'))
+    # shutil.rmtree(os.path.join(scan_path, 'tmp'))
     print("done")
     print('Elapsed time', np.round(time.time() - scan_time, 2), 'sec')
-
 
 
 def test_on_batch(net, options):
@@ -459,21 +557,23 @@ def transform_input_images(image_path, scan_names):
 
     # Nyul normalization. we need a brainmask to improve normalization
     # The CAMP351 brainmask registered against the T1 is used as a brain mask
-    normalization_hist = 'normalization/campinas_histogram.npy'
-    brainmask = register_brainmask_template_to_native(os.path.join(
-        image_path, scan_names[0]))
+    # current_path = get_current_path()
+    # normalization_hist = current_path + '/normalization/campinas_histogram.npy'
+    # brainmask = register_brainmask_template_to_native(os.path.join(
+    #     image_path, scan_names[0]))
 
     # normalize images
     for s in scan_names:
         current_scan = os.path.join(image_path, s)
         nifti_orig = nib.load(current_scan)
 
-        nifti_orig.get_data()[:] = n4_normalization(nifti_orig.get_data())
-        nifti_orig.get_data()[:] = nyul_apply_standard_scale(nifti_orig.get_data(),
-                                                             normalization_hist,
-                                                             brainmask)
+        # nifti_orig.get_data()[:] = n4_normalization(nifti_orig.get_data())
+        # nifti_orig.get_data()[:] = nyul_apply_standard_scale(nifti_orig.get_data(),
+        # normalization_hist,
+        #                                                      brainmask)
         t1_nifti_canonical = nib.as_closest_canonical(nifti_orig)
         t1_nifti_canonical.to_filename(os.path.join(tmp_folder, s))
+        # nifti_orig.to_filename(os.path.join(tmp_folder, s))
 
 
 def register_brainmask_template_to_native(scan_path):
@@ -504,7 +604,7 @@ def register_brainmask_template_to_native(scan_path):
     im_orig = ants.image_read(scan_path)
     my_tx = ants.registration(im_orig,
                               im_template,
-                              type_of_transform='Affine')
+                              type_of_transform='SyN')
 
     # reg_iterations=(160, 80, 40))
     #
@@ -525,6 +625,55 @@ def register_brainmask_template_to_native(scan_path):
                                              'template_t1.nii.gz'))
 
     return warped_brainmask.numpy()
+
+
+def register_native_to_template(scan_path):
+    """
+    native to template
+    """
+
+    current_script = get_current_path()
+    im_template = ants.image_read(os.path.join(current_script,
+                                               'campinas_template',
+                                               'CC351_nonlin_t1.nii.gz'))
+    # check if tmp folder is available
+    (image_path, scan_name) = os.path.split(scan_path)
+
+    tmp_folder = os.path.join(image_path, 'tmp')
+    if os.path.exists(tmp_folder) is False:
+        os.mkdir(tmp_folder)
+
+    # register the template against the original image
+    im_orig = ants.image_read(scan_path)
+    my_tx = ants.registration(im_template,
+                              im_orig,
+                              type_of_transform='Affine')
+
+    return my_tx
+
+
+def transform_template_to_native(original_image_path,
+                                 moved_image_path,
+                                 brainmask_path):
+
+    """
+    transform template to native back
+    """
+
+    im_orig = ants.image_read(original_image_path)
+    im_moved = ants.image_read(moved_image_path)
+    bm_moved = ants.image_read(brainmask_path)
+    # register the template against the original image
+
+    my_tx = ants.registration(im_orig,
+                              im_moved,
+                              type_of_transform='Affine')
+
+    warped_image = ants.apply_transforms(im_orig,
+                                         bm_moved,
+                                         my_tx['invtransforms'])
+
+    return warped_image.numpy()
 
 
 def get_current_path():
