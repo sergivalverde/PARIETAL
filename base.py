@@ -8,9 +8,11 @@ import ants
 from torch.utils.data import DataLoader
 from mri_utils.data_utils import reconstruct_image, extract_patches
 from mri_utils.data_utils import get_voxel_coordenates
-from mri_utils.processing import normalize_data
+from mri_utils.processing import normalize_data  # n4_normalization
 from model import SkullNet
 from scipy.ndimage import binary_fill_holes as fill_holes
+from scipy.ndimage import label
+from scipy.ndimage import labeled_comprehension as lc
 from dataset import MRI_DataPatchLoader
 from dataset import RotatePatch, FlipPatch
 from pyfiglet import Figlet
@@ -19,12 +21,16 @@ from pyfiglet import Figlet
 def train_skull_model(options):
     """
     Train skull-stripping model
+
+    Input images are transformed into the cannnical space before training.
     """
 
-    # load training / validation data
+    # list all training scans in a list
     list_scans = sorted(os.listdir(options['training_path']))
+
     if options['randomize_cases']:
         random.shuffle(list_scans)
+
     list_scans = list_scans[:int(len(list_scans) * options['perc_training'])]
     t_delimiter = int(len(list_scans) * (1 - options['train_split']))
     training_data = list_scans[:t_delimiter]
@@ -35,9 +41,9 @@ def train_skull_model(options):
     print('PREPROCESSING DATA')
     print('--------------------------------------------------')
 
-    # options['roi_mask'] = 'prebrainmask.nii.gz'
+    # compute the prebrainmask to guide patch extraction
+    options['roi_mask'] = 'prebrainmask.nii.gz'
 
-    '''
     for scan in list_scans:
         image_path = os.path.join(options['training_path'], scan)
         if os.path.exists(os.path.join(image_path, 'tmp')) is False:
@@ -47,7 +53,6 @@ def train_skull_model(options):
         T1 = nib.load(current_scan)
         T1.get_data()[:] = compute_pre_mask(T1.get_data())
         T1.to_filename(os.path.join(image_path, 'tmp', options['roi_mask']))
-    '''
 
     # move training scans to tmp a folder before building the MRI_PatchLoader
     for scan in list_scans:
@@ -61,6 +66,7 @@ def train_skull_model(options):
 
     input_data = {scan: [os.path.join(options['training_path'], scan, 'tmp', d)
                          for d in options['input_data']]
+
                   for scan in training_data}
     labels = {scan: [os.path.join(options['training_path'],
                                   scan,
@@ -81,9 +87,6 @@ def train_skull_model(options):
                       RotatePatch(180),
                       FlipPatch(0),
                       FlipPatch(180)]
-
-#     if len(transform) > 0:
-#         set_transforms = transforms.RandomChoice(transform)
 
     # dataset
     training_dataset = MRI_DataPatchLoader(input_data,
@@ -176,7 +179,9 @@ def run_skull_model(options):
     print("Initializing model....", end=' ')
     skull_net.load_weights()
     print("done")
+
     # perform inference
+    # infer_image_reg(skull_net, options)
     infer_image(skull_net, options)
     # test_on_batch(skull_net, options)
 
@@ -231,12 +236,9 @@ def infer_image(net, options):
 
     # binarize the results and fill remaining holes
     brainmask = prob_skull > options['out_threshold']
-    brainmask = fill_holes(brainmask)
-    # T1_skulled = T1_reg_image * brainmask
 
-    # bm_can_path = os.path.join(scan_path, 'tmp', 'brainmask_can.nii.gz')
-    # t1_nifti_canonical.get_data()[:] = brainmask
-    # t1_nifti_canonical.to_filename(bm_can_path)
+    # brainmask = fill_holes(brainmask)
+    brainmask = post_process_skull(brainmask)
 
     brainmask_can = nib.Nifti1Image(brainmask.astype('<f4'),
                                     affine=t1_nifti_canonical.affine)
@@ -251,7 +253,7 @@ def infer_image(net, options):
     brainmask_nifti.to_filename(os.path.join(scan_path,
                                              options['out_name'] + '.nii.gz'))
 
-    # shutil.rmtree(os.path.join(scan_path, 'tmp'))
+    shutil.rmtree(os.path.join(scan_path, 'tmp'))
     print("done")
     print('Elapsed time', np.round(time.time() - scan_time, 2), 'sec')
 
@@ -302,6 +304,7 @@ def infer_image_reg(net, options):
                                                 sel_method='all')
     test_patches = get_data_channels(os.path.join(scan_path, 'tmp'),
                                      ['t1_reg_can.nii.gz'],
+
                                      ref_voxels,
                                      patch_shape,
                                      step,
@@ -321,27 +324,18 @@ def infer_image_reg(net, options):
     brainmask = fill_holes(brainmask)
     # T1_skulled = T1_reg_image * brainmask
 
-    bm_reg_can_path = os.path.join(scan_path, 'tmp', 'brainmask_reg_can.nii.gz')
-    t1_nifti_canonical.get_data()[:] = brainmask
-    t1_nifti_canonical.to_filename(bm_reg_can_path)
+    bm_reg_can_path = os.path.join(scan_path,
+                                   'tmp',
+                                   'brainmask_reg_can.nii.gz')
+    brainmask_can = nib.Nifti1Image(brainmask.astype('<f4'),
+                                    affine=t1_nifti_canonical.affine)
+    brainmask_can.to_filename(bm_reg_can_path)
 
-    brainmask_nifti = transform_canonical_to_orig(t1_nifti_canonical,
+    brainmask_nifti = transform_canonical_to_orig(brainmask_can,
                                                   t1_reg)
-
     bm_reg_path = os.path.join(scan_path, 'tmp', 'brainmask_reg.nii.gz')
     brainmask_nifti.to_filename(bm_reg_path)
 
-    # we transform computed images back to the T1 original space
-    # brainmask_nifti = nib.Nifti1Image(brainmask.astype('uint8'),
-    #                                  affine=T1_scan.affine)
-    # T1_brain_nifti = nib.Nifti1Image(im,
-    #                                  affine=T1_org_can.affine)
-    # T1_orig = nib.load(os.path.join(scan_path, options['input_data'][0]))
-    # T1_brain_nifti = transform_canonical_to_orig(T1_brain_nifti,
-    #                                             T1_orig)
-
-    # invert registration
-    # orig_scan = os.path.join(scan_path, options['input_data'][0])
     im = transform_template_to_native(orig_scan,
                                       os.path.join(scan_path,
                                                    'tmp',
@@ -351,97 +345,10 @@ def infer_image_reg(net, options):
     T1_out = nib.Nifti1Image(im, affine=T1_scan.affine)
     T1_out.to_filename(os.path.join(scan_path,
                                     options['out_name'] + '.nii.gz'))
-    # shutil.rmtree(os.path.join(scan_path, 'tmp'))
+
+    shutil.rmtree(os.path.join(scan_path, 'tmp'))
     print("done")
     print('Elapsed time', np.round(time.time() - scan_time, 2), 'sec')
-
-
-def test_on_batch(net, options):
-    """
-    Perform inference on several images (batch mode)
-    Steps for each testing image:
-    - Load bathches
-    - Perform inference
-    - Reconstruct the output image
-    """
-    experiment = options['experiment']
-    patch_shape = options['test_patch_shape']
-    step = options['test_step']
-    image_path = options['test_path']
-
-    # get list of images to test
-    list_scans = sorted(os.listdir(image_path))
-
-    # Perform inference in each of images
-
-    for scan in list_scans:
-
-        scan_time = time.time()
-
-        # scan_path = os.path.join(image_path, scan)
-        scan_path = os.path.join(image_path, scan)
-        transform_input_images(scan_path, options['input_data'])
-
-        # compute the ROI brain+skull
-        T1_scan = nib.load(os.path.join(scan_path, 'tmp', options['input_data'][0]))
-        T1_image = T1_scan.get_data()
-        mask_image = compute_pre_mask(T1_image)
-
-        # get candidate voxels
-        ref_mask, ref_voxels = get_candidate_voxels(mask_image,
-                                                    step,
-                                                    sel_method='all')
-
-        # input images stacked as channels
-        test_patches = get_data_channels(os.path.join(scan_path, 'tmp'),
-                                         options['input_data'],
-                                         ref_voxels,
-                                         patch_shape,
-                                         step,
-                                         normalize=options['normalize'])
-
-        print('--------------------------------------------------')
-        print("Scan:", scan, "..... Predicting skull")
-
-        # out_pred, t1_rec, flair_rec  = net.test_net(test_patches)
-        pred = net.test_net(test_patches)
-
-        # reconstruction segmentation
-        prob_skull = reconstruct_image(np.squeeze(pred),
-                                       ref_voxels,
-                                       ref_mask.shape)
-
-        # binarize the results and fill remaining holes
-        brainmask = prob_skull > options['out_threshold']
-        brainmask = fill_holes(brainmask)
-        T1_skulled = T1_image * brainmask
-
-
-        # we transform computed images back to the T1 original space
-        brainmask_nifti = nib.Nifti1Image(brainmask.astype('uint8'),
-                                         affine=T1_scan.affine)
-        T1_brain_nifti = nib.Nifti1Image(T1_skulled,
-                                         affine=T1_scan.affine)
-        T1_orig = nib.load(os.path.join(scan_path, options['input_data'][0]))
-        brainmask_nifti = transform_canonical_to_orig(brainmask_nifti,
-                                                      T1_orig)
-        T1_brain_nifti = transform_canonical_to_orig(T1_brain_nifti,
-                                                      T1_orig)
-
-        # save the results
-        T1_orig.get_data()[:] = T1_brain_nifti.get_data()
-
-        T1_orig.to_filename(os.path.join(scan_path,
-                                         options['out_name'] + '.nii.gz'))
-        T1_orig.get_data()[:] = brainmask_nifti.get_data()
-        T1_orig.to_filename(os.path.join(scan_path,
-                                                 options['out_name'] + '_brainmask.nii.gz'))
-
-        # remove tmp file when finished
-        shutil.rmtree(os.path.join(scan_path, 'tmp'))
-
-        print('elapsed time', time.time() - scan_time)
-        print('--------------------------------------------------')
 
 
 def get_data_channels(image_path,
@@ -567,10 +474,17 @@ def transform_input_images(image_path, scan_names):
         current_scan = os.path.join(image_path, s)
         nifti_orig = nib.load(current_scan)
 
-        # nifti_orig.get_data()[:] = n4_normalization(nifti_orig.get_data())
+        # check for extra dims
+        if len(nifti_orig.get_data().shape) > 3:
+            nifti_orig = nib.Nifti1Image(np.squeeze(nifti_orig.get_data()),
+                                         affine=nifti_orig.affine)
+
+        nifti_orig.get_data()[:] = normalize_data(nifti_orig.get_data(),
+                                                  norm_type='zero_one')
+
         # nifti_orig.get_data()[:] = nyul_apply_standard_scale(nifti_orig.get_data(),
         # normalization_hist,
-        #                                                      brainmask)
+
         t1_nifti_canonical = nib.as_closest_canonical(nifti_orig)
         t1_nifti_canonical.to_filename(os.path.join(tmp_folder, s))
         # nifti_orig.to_filename(os.path.join(tmp_folder, s))
@@ -691,9 +605,9 @@ def show_info(options):
     print("--------------------------------------------------")
     print(f.renderText("PARIETAL"))
     print("Yet another deeP leARnIng brain ExTrAtion tooL")
-    print("(c) Sergi Valverde, 2019")
+    print("(c) Sergi Valverde, 2020")
     print(" ")
-    print("version: v0.1")
+    print("version: v0.2")
     print("--------------------------------------------------")
     print(" ")
     print("Image information:")
@@ -706,3 +620,28 @@ def show_info(options):
     print("Model path:", options['model_path'])
     print("Model name:", options['experiment'])
     print("--------------------------------------------------")
+
+
+def post_process_skull(input_mask):
+    """
+    post process input mask
+    - fill holes in 2D
+    - take the biggest region the final brainmask
+    """
+
+    # fill holes in 2D
+    for s in range(input_mask.shape[2]):
+        input_mask[:, :, s] = fill_holes(input_mask[:, :, s])
+
+    # get the biggest region
+    regions, num_regions = label(input_mask > 0)
+    labels = np.arange(1, num_regions+1)
+    output_mask = np.zeros_like(input_mask)
+    max_region = np.argmax(
+        lc(input_mask > 0, regions, labels, np.sum, int, 0)) + 1
+    current_voxels = np.stack(np.where(regions == max_region), axis=1)
+    output_mask[current_voxels[:, 0],
+                current_voxels[:, 1],
+                current_voxels[:, 2]] = 1
+
+    return output_mask

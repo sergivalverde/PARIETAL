@@ -3,7 +3,7 @@
 #
 # Yet another brain extration tool for MRI
 #
-# Sergi Valverde 2019
+# Sergi Valverde 2020
 # --------------------------------------------------
 
 import os
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     # check input file from opt.input_image, whether it's a input_file
     # or relative / absolute path
-    script_folder = os.path.dirname(os.path.abspath( __file__ ))
+    script_folder = os.path.dirname(os.path.abspath(__file__))
     input_image = opt.input_image
 
     if str.find(input_image, '/') >= 0:
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             options['experiment'] = opt.model_path
     else:
         options['model_path'] = os.path.join(script_folder, 'models')
-        options['experiment'] = 'campinas_baseline_s2'
+        options['experiment'] = 'campinas_baseline_s2_multires'
 
     print(options['model_path'], options['experiment'])
     options['out_name'] = opt.out_name

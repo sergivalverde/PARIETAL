@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-from model_utils import UpdateStatus, EarlyStopping, ResCoreElement, ConvElement, Pooling3D
+from model_utils import UpdateStatus, EarlyStopping, ResCoreElement, Pooling3D
 
 
 class ResUnet(nn.Module):
@@ -149,9 +149,6 @@ class SkullNet(nn.Module):
                  gpu_mode=True,
                  gpu_list=[0],
                  use_bn=False,
-
-
-
                  load_weights=False,
                  loss_weights=None,
                  model_path=None,
@@ -200,8 +197,9 @@ class SkullNet(nn.Module):
         #     self.device = torch.device('cuda:' + str(gpu_list[0]))
         #     self.parallel = True
 
+        self.device_name = 'cuda:' + str(gpu_list[0])
         if self.gpu_mode:
-            self.device = torch.device('cuda:' + str(gpu_list[0]))
+            self.device = torch.device(self.device_name)
         else:
             self.device = torch.device('cpu')
 
@@ -416,7 +414,7 @@ class SkullNet(nn.Module):
         # filename = './models/' + self.model_name
         # print("--------------------------------------------------")
         if os.path.isfile(filename):
-            checkpoint = torch.load(filename, map_location=map_location)
+            checkpoint = torch.load(filename, map_location=self.device_name)
             # check if the network was trained using data parallelism
             if checkpoint['data_parallel']:
                 self.skull_net = nn.DataParallel(self.skull_net)
@@ -442,7 +440,7 @@ class SkullNet(nn.Module):
             for b in range(0, len(lesion_out), self.batch_size):
                 x = torch.tensor(test_input[b:b+self.batch_size]).to(self.device)
                 pred = self.skull_net(x)
-                output = pred[:,1].unsqueeze(dim=1)
+                output = pred[:, 1].unsqueeze(dim=1)
                 # save the result back
                 lesion_out[b:b+self.batch_size] = output.cpu().numpy()
 
