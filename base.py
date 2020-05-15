@@ -212,6 +212,7 @@ def infer_image(net, options):
 
     t1_nifti_canonical = nib.load(t1_tmp_path)
     mask_image = compute_pre_mask(t1_nifti_canonical.get_data())
+
     ref_mask, ref_voxels = get_candidate_voxels(mask_image,
                                                 step,
                                                 sel_method='all')
@@ -473,21 +474,25 @@ def transform_input_images(image_path, scan_names):
     for s in scan_names:
         current_scan = os.path.join(image_path, s)
         nifti_orig = nib.load(current_scan)
+        im_ = nifti_orig.get_data()
+
+        processed_scan = nib.Nifti1Image(im_.astype('<f4'),
+                                         affine=nifti_orig.affine)
 
         # check for extra dims
         if len(nifti_orig.get_data().shape) > 3:
-            nifti_orig = nib.Nifti1Image(np.squeeze(nifti_orig.get_data()),
-                                         affine=nifti_orig.affine)
+            processed_scan = nib.Nifti1Image(np.squeeze(processed_scan.get_data()),
+                                             affine=nifti_orig.affine)
 
-        nifti_orig.get_data()[:] = normalize_data(nifti_orig.get_data(),
-                                                  norm_type='zero_one')
+        processed_scan.get_data()[:] = normalize_data(processed_scan.get_data(),
+                                                      norm_type='zero_one')
 
-        # nifti_orig.get_data()[:] = nyul_apply_standard_scale(nifti_orig.get_data(),
+        # processed_scan.get_data()[:] = nyul_apply_standard_scale(processed_scan.get_data(),
         # normalization_hist,
 
-        t1_nifti_canonical = nib.as_closest_canonical(nifti_orig)
+        t1_nifti_canonical = nib.as_closest_canonical(processed_scan)
         t1_nifti_canonical.to_filename(os.path.join(tmp_folder, s))
-        # nifti_orig.to_filename(os.path.join(tmp_folder, s))
+        # processed_scan.to_filename(os.path.join(tmp_folder, s))
 
 
 def register_brainmask_template_to_native(scan_path):
