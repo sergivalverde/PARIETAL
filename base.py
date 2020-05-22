@@ -44,21 +44,21 @@ def train_skull_model(options):
     # compute the prebrainmask to guide patch extraction
     options['roi_mask'] = 'prebrainmask.nii.gz'
 
-    for scan in list_scans:
-        image_path = os.path.join(options['training_path'], scan)
-        if os.path.exists(os.path.join(image_path, 'tmp')) is False:
-            os.mkdir(os.path.join(image_path, 'tmp'))
-
-        current_scan = os.path.join(image_path, options['input_data'][0])
-        T1 = nib.load(current_scan)
-        T1.get_data()[:] = compute_pre_mask(T1.get_data())
-        T1.to_filename(os.path.join(image_path, 'tmp', options['roi_mask']))
+    # for scan in list_scans:
+    #     image_path = os.path.join(options['training_path'], scan)
+    #     if os.path.exists(os.path.join(image_path, 'tmp')) is False:
+    #         os.mkdir(os.path.join(image_path, 'tmp'))
+#
+    #     current_scan = os.path.join(image_path, options['input_data'][0])
+    #     T1 = nib.load(current_scan)
+    #     T1.get_data()[:] = compute_pre_mask(T1.get_data())
+    #     T1.to_filename(os.path.join(image_path, 'tmp', options['roi_mask']))
 
     # move training scans to tmp a folder before building the MRI_PatchLoader
-    for scan in list_scans:
-        scan_names = options['input_data'] + [options['out_scan']] + [options['roi_mask']]
-        current_scan = os.path.join(options['training_path'], scan)
-        transform_input_images(current_scan, scan_names)
+    # for scan in list_scans:
+    #     scan_names = options['input_data'] + [options['out_scan']] + [options['roi_mask']]
+    #     current_scan = os.path.join(options['training_path'], scan)
+    #     transform_input_images(current_scan, scan_names)
 
     print('--------------------------------------------------')
     print('TRAINING DATA:')
@@ -138,7 +138,7 @@ def train_skull_model(options):
 
     # train the model
     skull_net = SkullNet(input_channels=options['input_channels'],
-                         patch_shape=options['train_patch_shape'],
+                         patch_shape=(32, 32, 32),
                          scale=options['scale'],
                          model_name=options['experiment'],
                          gpu_mode=options['use_gpu'],

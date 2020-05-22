@@ -97,6 +97,7 @@ class ResUnet(nn.Module):
         # print("ResUnet3D network with {} parameters".format(nparams))
 
     def forward(self, x, encoder=False):
+
         # --------------------
         # encoder
         # --------------------
@@ -211,9 +212,6 @@ class SkullNet(nn.Module):
         """
         training = True
 
-        train_samples = len(t_dataloader)
-        val_samples = len(v_dataloader)
-
         # send models to device
         self.skull_net = self.skull_net.to(self.device)
 
@@ -254,16 +252,21 @@ class SkullNet(nn.Module):
                 val_dsc = 0
                 train_custom = 0
                 val_custom = 0
-
+                sampling_freqs = np.zeros((4, 1))
                 self.skull_net.train()
 
                 epoch_time = time.time()
 
                 # train on batch
+
                 for b, batch in enumerate(t_dataloader):
 
-                    x = batch[0].to(self.device)
-                    y = batch[1].to(self.device)
+                    s_ = np.random.randint(4) + 1
+                    z = np.arange(0, 32 * s_, s_)
+                    x = batch[0][:, :, :, :, z].to(self.device)
+                    y = batch[1][:, :, :, :, z].to(self.device)
+
+                    sampling_freqs[s_ - 1] += 1
 
                     net_optimizer.zero_grad()
 
@@ -299,7 +302,7 @@ class SkullNet(nn.Module):
                 train_loss /= (b+1)
                 train_accuracy /= (b+1)
                 train_dsc /= (b + 1)
-
+                sampling_freqs /= (b + 1)
                 # --------------------------------------------------
                 # compute validation
                 # --------------------------------------------------
@@ -308,8 +311,13 @@ class SkullNet(nn.Module):
 
                 for b, batch in enumerate(v_dataloader):
 
-                    x = batch[0].to(self.device)
-                    y = batch[1].to(self.device)
+                    s_ = np.random.randint(4) + 1
+                    z = np.arange(0, 32 * s_, s_)
+                    x = batch[0][:, :, :, :, z].to(self.device)
+                    y = batch[1][:, :, :, :, z].to(self.device)
+
+                    # x = batch[0].to(self.device)
+                    # y = batch[1].to(self.device)
 
                     # --------------------------------------------------
                     # lesion
@@ -354,7 +362,11 @@ class SkullNet(nn.Module):
                                                 val_accuracy)),
                       'Val lesion DSC: {}'.format(
                           update.update_element('val_dsc',
-                                                val_dsc)))
+                                                val_dsc)),
+                      'S1: {0:.2f}'.format(sampling_freqs[0][0]),
+                      'S2: {0:.2f}'.format(sampling_freqs[1][0]),
+                      'S3: {0:.2f}'.format(sampling_freqs[2][0]),
+                      'S4: {0:.2f}'.format(sampling_freqs[3][0]))
 
                 # update epochs
                 epoch += 1
