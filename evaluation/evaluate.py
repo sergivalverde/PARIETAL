@@ -1,5 +1,5 @@
 # --------------------------------------------------
-# Evaluate BIOMARKEM 
+# Evaluate BIOMARKEM
 #
 # Sergi Valverde 2019
 # svalverdee@eia.udg.edu
@@ -62,7 +62,7 @@ for SCAN, index in zip(scans, range(len(scans))):
     bet_ias_scan = nib.load(os.path.join(current_scan, 'bet', 'ias_bet.nii.gz'))
     robex_ias_scan = nib.load(os.path.join(current_scan, 'robex', 'ias_robex.nii.gz'))
     parietal_ias_scan = nib.load(os.path.join(current_scan, 'parietal', 'ias_parietal.nii.gz'))
-    consnet_ias_scan = nib.load(os.path.join(current_scan, 'consnet', 't1_ias_consensus_pp.nii.gz'))
+    cnsnet_ias_scan = nib.load(os.path.join(current_scan, 'consnet', 't1_ias_consensus_pp.nii.gz'))
     bet_ias = bet_ias_scan.get_data()
     robex_ias = robex_ias_scan.get_data()
     parietal_ias = parietal_ias_scan.get_data()

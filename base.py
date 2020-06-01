@@ -157,7 +157,6 @@ def run_skull_model(options):
     # skull net
 
     options['normalize'] = True
-    options['test_step'] = (16, 16, 16)
     options['scale'] = 2
     options['train_patch_shape'] = (32, 32, 32)
     options['test_patch_shape'] = (32, 32, 32)

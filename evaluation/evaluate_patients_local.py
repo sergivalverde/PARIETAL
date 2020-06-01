@@ -17,12 +17,10 @@ import sys
 # - ...
 # --------------------------------------------------------------------------------
 
-IMAGE_PATH = '/mnt/DATA/w/biomarkem/images/skull/pacients_itinerants/all'
+# IMAGE_PATH = '/home/sergivalverde/DATA/biomarkem/healthies/all'
+IMAGE_PATH = '/home/sergivalverde/DATA/biomarkem/pacients_itinerants/all'
 # IMAGE_PATH = '/mnt/DATA/w/biomarkem/images/skull/healthies/all'
 scans = sorted(os.listdir(IMAGE_PATH))
-
-
-
 
 # ------------------------------------------------------------------------------
 # compute brain cavities for all subjects and scanners
@@ -49,7 +47,7 @@ for SCAN, index in zip(scans, range(len(scans))):
     current_scan = os.path.join(IMAGE_PATH, SCAN)
     bet_ias_scan = nib.load(os.path.join(current_scan, 'bet', 'ias_bet.nii.gz'))
     robex_ias_scan = nib.load(os.path.join(current_scan, 'robex', 'ias_robex.nii.gz'))
-    parietal_ias_scan = nib.load(os.path.join(current_scan, 'parietal', 'ias_parietal.nii.gz'))
+    parietal_ias_scan = nib.load(os.path.join(current_scan, 'parietal', 'parietal_s2_t1_ias.nii.gz'))
     bet_ias = bet_ias_scan.get_data()
     robex_ias = robex_ias_scan.get_data()
     parietal_ias = parietal_ias_scan.get_data()
@@ -59,7 +57,7 @@ for SCAN, index in zip(scans, range(len(scans))):
     current_scan = os.path.join(IMAGE_PATH, SCAN)
     bet_tr_scan = nib.load(os.path.join(current_scan, 'bet', 'tr_bet.nii.gz'))
     robex_tr_scan = nib.load(os.path.join(current_scan, 'robex', 'tr_robex.nii.gz'))
-    parietal_tr_scan = nib.load(os.path.join(current_scan, 'parietal', 'tr_parietal.nii.gz'))
+    parietal_tr_scan = nib.load(os.path.join(current_scan, 'parietal', 'parietal_s2_t1_tr.nii.gz'))
     bet_tr = bet_tr_scan.get_data()
     robex_tr = robex_tr_scan.get_data()
     parietal_tr = parietal_tr_scan.get_data()
@@ -69,7 +67,7 @@ for SCAN, index in zip(scans, range(len(scans))):
     current_scan = os.path.join(IMAGE_PATH, SCAN)
     bet_vh_scan = nib.load(os.path.join(current_scan, 'bet', 'vh_bet.nii.gz'))
     robex_vh_scan = nib.load(os.path.join(current_scan, 'robex', 'vh_robex.nii.gz'))
-    parietal_vh_scan = nib.load(os.path.join(current_scan, 'parietal', 'vh_parietal.nii.gz'))
+    parietal_vh_scan = nib.load(os.path.join(current_scan, 'parietal', 'parietal_s2_t1_vh.nii.gz'))
     bet_vh = bet_vh_scan.get_data()
     robex_vh = robex_vh_scan.get_data()
     parietal_vh = parietal_vh_scan.get_data()

@@ -261,10 +261,17 @@ class SkullNet(nn.Module):
 
                 for b, batch in enumerate(t_dataloader):
 
+                    # s_ = np.random.randint(4) + 1
+                    # z = np.arange(0, 32 * s_, s_)
+                    # x = batch[0][:, :, :, :, z].to(self.device)
+                    # y = batch[1][:, :, :, :, z].to(self.device)
+
                     s_ = np.random.randint(4) + 1
-                    z = np.arange(0, 32 * s_, s_)
-                    x = batch[0][:, :, :, :, z].to(self.device)
-                    y = batch[1][:, :, :, :, z].to(self.device)
+                    x = F.interpolate(batch[0][:, :, :, :, :32 * s_],
+                                      (32, 32, 32)).to(self.device)
+
+                    y = F.interpolate(batch[1][:, :, :, :, :32 * s_],
+                                      (32, 32, 32)).to(self.device)
 
                     sampling_freqs[s_ - 1] += 1
 

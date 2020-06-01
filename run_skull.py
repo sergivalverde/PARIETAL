@@ -79,7 +79,11 @@ if __name__ == "__main__":
             options['experiment'] = opt.model_path
     else:
         options['model_path'] = os.path.join(script_folder, 'models')
-        options['experiment'] = 'campinas_baseline_s2_multires'
+        # options['experiment'] = 'campinas_baseline_s2_multires'
+        # options['experiment'] = 'campinas_baseline_s2'
+        # options['experiment'] = 'campinas_multires_model_s2'
+        # options['experiment'] = 'campinas_multires_model_s2_16_16_4'
+        options['experiment'] = 'campinas_multires_model_s2_8_8_8_interp'
 
     print(options['model_path'], options['experiment'])
     options['out_name'] = opt.out_name
