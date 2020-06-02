@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-from model_utils import UpdateStatus, EarlyStopping, ResCoreElement, Pooling3D
+from _utils.model_utils import UpdateStatus, EarlyStopping, ResCoreElement, Pooling3D
 
 
 class ResUnet(nn.Module):
@@ -242,8 +242,6 @@ class Parietal(nn.Module):
                 val_accuracy = 0
                 train_dsc = 0
                 val_dsc = 0
-                train_custom = 0
-                val_custom = 0
                 sampling_freqs = np.zeros((4, 1))
                 self.skull_net.train()
 
@@ -253,19 +251,8 @@ class Parietal(nn.Module):
 
                 for b, batch in enumerate(t_dataloader):
 
-                    # s_ = np.random.randint(4) + 1
-                    # z = np.arange(0, 32 * s_, s_)
-                    # x = batch[0][:, :, :, :, z].to(self.device)
-                    # y = batch[1][:, :, :, :, z].to(self.device)
-
-                    s_ = np.random.randint(4) + 1
-                    x = F.interpolate(batch[0][:, :, :, :, :32 * s_],
-                                      (32, 32, 32)).to(self.device)
-
-                    y = F.interpolate(batch[1][:, :, :, :, :32 * s_],
-                                      (32, 32, 32)).to(self.device)
-
-                    sampling_freqs[s_ - 1] += 1
+                    x = batch[0].to(self.device)
+                    y = batch[1].to(self.device)
 
                     net_optimizer.zero_grad()
 

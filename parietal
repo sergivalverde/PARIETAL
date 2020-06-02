@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+
+# --------------------------------------------------
+# PARIETAL: DeeP leArning mRI brain ExTrAction Tool
+#
+# Yet another brain extration tool for MRI
+#
+# Sergi Valverde 2020
+# --------------------------------------------------
+
+import os
+import argparse
+from pyfiglet import Figlet
+from brain_extraction import BrainExtraction
+from __init__ import __version__ as version
+
+
+if __name__ == "__main__":
+
+    """
+    main function
+    """
+
+    # Training settings
+    parser = argparse.ArgumentParser(
+        description="PARIETAL: yet another deeP leARnIng brain ExTrAtion tooL")
+    parser.add_argument('--input_scan',
+                        action='store',
+                        help='T1 nifti image to process (mandatory)')
+    parser.add_argument('--output_scan',
+                        action='store',
+                        help='Output image name for the resulted skull stripped image (mandatory)')
+    parser.add_argument('--threshold',
+                        type=float,
+                        default=0.5,
+                        help='Output threshold to binarize the brainmask (default=0.5)')
+    parser.add_argument('--gpu',
+                        action='store_true',
+                        help='Use GPU for computing (default=false)')
+    parser.add_argument('--gpu_number',
+                        type=int,
+                        default=0,
+                        help='Select the GPU number to use (default=0)')
+    parser.add_argument('--model_path',
+                        default=None,
+                        help='Absolute path to the trained model to use (default=campinas baseline)')
+    parser.add_argument('--verbose',
+                        action='store_true',
+                        help='Verbose mode')
+
+    opt = parser.parse_args()
+
+    # check input file from opt.input_image, whether it's a input_file
+    # or relative / absolute path
+    script_folder = os.path.dirname(os.path.abspath(__file__))
+
+    # correct for relative / absolute paths for input image
+    input_image = opt.input_scan
+    if str.find(input_image, '/') >= 0:
+        if os.path.isabs(input_image):
+            (im_path, im_name) = os.path.split(input_image)
+            input_path = input_image
+        else:
+            (im_path, im_name) = os.path.split(input_image)
+            input_path = os.path.join(os.path.join(os.getcwd(), im_path),
+                                      im_name)
+    else:
+        input_path = os.path.join(os.getcwd(), input_image)
+
+    # correct for relative / absolute paths for output image
+    output_image = opt.output_scan
+    if str.find(output_image, '/') >= 0:
+        if os.path.isabs(output_image):
+            (im_path, im_name) = os.path.split(output_image)
+            output_path = output_image
+        else:
+            (im_path, im_name) = os.path.split(output_image)
+            output_path = os.path.join(os.path.join(os.getcwd(), im_path),
+                                       im_name)
+    else:
+        output_path = os.path.join(os.getcwd(), output_image)
+
+    # default model name
+    model_name = 'campinas_baseline_s2_multires'
+
+    if opt.verbose:
+        f = Figlet(font="slant")
+        print("--------------------------------------------------")
+        print(f.renderText("PARIETAL"))
+        print("Yet another deeP leARnIng brain ExTrAtion tooL")
+        print("(c) Sergi Valverde, 2020")
+        print(" ")
+        print("version: v", version)
+        print("--------------------------------------------------")
+        print(" ")
+        print("Image information:")
+        print("input scan ", input_path)
+        print("Output scan: ", output_path)
+        print("Using GPU:", opt.gpu)
+        print(" ")
+        print("Model information")
+        print("Model name:", model_name)
+        print("--------------------------------------------------")
+
+    # perform brain extraction
+    parietal = BrainExtraction(model_name=model_name,
+                               use_gpu=opt.gpu,
+                               gpu_number=opt.gpu_number,
+                               threshold=opt.threshold)
+
+    _ = parietal.run(input_path, output_path)
