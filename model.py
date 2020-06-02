@@ -130,7 +130,7 @@ class ResUnet(nn.Module):
             else self.conv9(x8)
 
 
-class SkullNet(nn.Module):
+class Parietal(nn.Module):
     """
     Quick and dirty Voxelmorph implementation
     """
@@ -155,7 +155,7 @@ class SkullNet(nn.Module):
                  model_path=None,
                  resume_training=False):
 
-        super(SkullNet, self).__init__()
+        super(Parietal, self).__init__()
 
         # network parameters
         self.input_channels = input_channels
@@ -185,19 +185,6 @@ class SkullNet(nn.Module):
                                  use_bn=True,
                                  classification=True)
 
-        # GPU devices. Configure the number of GPUS to use if more that one are
-        # available. Pytorch gpu ids have to be sorted from 0,1,... so system
-        # GPUS visubility is set before to match this
-        self.parallel = False
-
-        # if len(gpu_list) > 1:
-        #     print('Setting parallel training')
-        #     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(str(x)
-        #                                                   for x in gpu_list)
-        #     gpu_list = list(range(len(gpu_list)))
-        #     self.device = torch.device('cuda:' + str(gpu_list[0]))
-        #     self.parallel = True
-
         self.device_name = 'cuda:' + str(gpu_list[0])
         if self.gpu_mode:
             self.device = torch.device(self.device_name)
@@ -205,6 +192,11 @@ class SkullNet(nn.Module):
             self.device = torch.device('cpu')
 
         self.gpu_list = gpu_list
+
+        # load weights if model name if passed as an option
+        # and load weights flag is activated
+        if load_weights and model_name:
+            self.load_weights(model_name)
 
     def train_model(self, t_dataloader, v_dataloader):
         """
@@ -453,7 +445,6 @@ class SkullNet(nn.Module):
         # output reconstruction
         bs, cs, xs, ys, zs = test_input.shape
         lesion_out = np.zeros((bs, 1, xs, ys, zs)).astype('float32')
-
         self.skull_net.eval()
         with torch.no_grad():
             for b in range(0, len(lesion_out), self.batch_size):
