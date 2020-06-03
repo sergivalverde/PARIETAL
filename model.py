@@ -11,7 +11,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-from _utils.model_utils import UpdateStatus, EarlyStopping, ResCoreElement, Pooling3D
+from _utils.model_utils import UpdateStatus, EarlyStopping
+from _utils.model_utils import ResCoreElement, Pooling3D
 
 
 class ResUnet(nn.Module):
@@ -93,7 +94,7 @@ class ResUnet(nn.Module):
                                kernel_size=1)
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        nparams = sum([np.prod(p.size()) for p in model_parameters])
+        # nparams = sum([np.prod(p.size()) for p in model_parameters])
         # print("ResUnet3D network with {} parameters".format(nparams))
 
     def forward(self, x, encoder=False):
@@ -207,11 +208,6 @@ class Parietal(nn.Module):
         # send models to device
         self.skull_net = self.skull_net.to(self.device)
 
-        # parallel models
-        if self.parallel:
-            self.skull_net = nn.DataParallel(self.skull_net,
-                                             device_ids=self.gpu_list)
-
         # optimizers
         net_optimizer = optim.Adadelta(self.skull_net.parameters())
 
@@ -242,7 +238,6 @@ class Parietal(nn.Module):
                 val_accuracy = 0
                 train_dsc = 0
                 val_dsc = 0
-                sampling_freqs = np.zeros((4, 1))
                 self.skull_net.train()
 
                 epoch_time = time.time()
@@ -288,7 +283,6 @@ class Parietal(nn.Module):
                 train_loss /= (b+1)
                 train_accuracy /= (b+1)
                 train_dsc /= (b + 1)
-                sampling_freqs /= (b + 1)
                 # --------------------------------------------------
                 # compute validation
                 # --------------------------------------------------
@@ -297,17 +291,9 @@ class Parietal(nn.Module):
 
                 for b, batch in enumerate(v_dataloader):
 
-                    s_ = np.random.randint(4) + 1
-                    z = np.arange(0, 32 * s_, s_)
-                    x = batch[0][:, :, :, :, z].to(self.device)
-                    y = batch[1][:, :, :, :, z].to(self.device)
+                    x = batch[0].to(self.device)
+                    y = batch[1].to(self.device)
 
-                    # x = batch[0].to(self.device)
-                    # y = batch[1].to(self.device)
-
-                    # --------------------------------------------------
-                    # lesion
-                    # --------------------------------------------------
                     with torch.no_grad():
                         pred = self.skull_net(x)
                         # loss = dsc_loss(pred, y)
@@ -320,7 +306,8 @@ class Parietal(nn.Module):
                         # relative accuracy
                         pred = pred.max(1, keepdim=True)[1]
                         val_accuracy += pred.eq(
-                            y.view_as(pred).long()).sum().item() / np.prod(y.shape)
+                            y.view_as(
+                                pred).long()).sum().item() / np.prod(y.shape)
                         val_dsc += self.DSC_score(pred, y).item()
 
                 # update losses
@@ -348,12 +335,7 @@ class Parietal(nn.Module):
                                                 val_accuracy)),
                       'Val lesion DSC: {}'.format(
                           update.update_element('val_dsc',
-                                                val_dsc)),
-                      'S1: {0:.2f}'.format(sampling_freqs[0][0]),
-                      'S2: {0:.2f}'.format(sampling_freqs[1][0]),
-                      'S3: {0:.2f}'.format(sampling_freqs[2][0]),
-                      'S4: {0:.2f}'.format(sampling_freqs[3][0]))
-
+                                                val_dsc)))
                 # update epochs
                 epoch += 1
 
@@ -362,7 +344,6 @@ class Parietal(nn.Module):
                     # save the model
                     self.save_checkpoint({
                         'epoch': epoch + 1,
-                        'data_parallel': self.parallel,
                         'state_dict_les': self.skull_net.state_dict()})
                 # check if the model has to be stoped
                 if early_stopper.stop_model():
@@ -382,7 +363,7 @@ class Parietal(nn.Module):
         """
         save the best net state
         """
-        #if os.path.exists(os.path.join(self.model_path, 'models')) is False:
+        # if os.path.exists(os.path.join(self.model_path, 'models')) is False:
         #    os.mkdir(os.path.join(self.model_path, 'models'))
 
         # filename = self.model_path + '/models/' + self.model_name
@@ -402,9 +383,6 @@ class Parietal(nn.Module):
 
         self.skull_net = self.skull_net.to(self.device)
 
-        # remap weights if CPU: necessary for Docker
-        map_location = 'cuda' if self.gpu_mode else 'cpu'
-
         # load weights
         # filename = self.model_path + '/models/' + self.model_name
         filename = os.path.join(self.model_path, self.model_name)
@@ -413,10 +391,6 @@ class Parietal(nn.Module):
         # print("--------------------------------------------------")
         if os.path.isfile(filename):
             checkpoint = torch.load(filename, map_location=self.device)
-            # check if the network was trained using data parallelism
-            if checkpoint['data_parallel']:
-                self.skull_net = nn.DataParallel(self.skull_net)
-            # load weights
             self.skull_net.load_state_dict(checkpoint['state_dict_les'])
 
             # print("=> loaded weights '{}'".format(self.model_name))
@@ -435,34 +409,14 @@ class Parietal(nn.Module):
         self.skull_net.eval()
         with torch.no_grad():
             for b in range(0, len(lesion_out), self.batch_size):
-                x = torch.tensor(test_input[b:b+self.batch_size]).to(self.device)
+                x = torch.tensor(
+                    test_input[b:b+self.batch_size]).to(self.device)
                 pred = self.skull_net(x)
                 output = pred[:, 1].unsqueeze(dim=1)
                 # save the result back
                 lesion_out[b:b+self.batch_size] = output.cpu().numpy()
 
         return lesion_out
-
-    def test_net_3D(self, test_input):
-        """
-        Testing the network
-        To doc
-        """
-        # output reconstruction
-        # compute validation
-        # --------------------------------------------------
-        self.skull_net.eval()
-
-        for x in test_input:
-            with torch.no_grad():
-                x = x[0].to(self.device)
-                # --------------------------------------------------
-                # lesion
-                # --------------------------------------------------
-                with torch.no_grad():
-                    output = self.skull_net(x)[:, 1]
-
-        return output.cpu().numpy()
 
     def DSC_score(self, pred, label, smooth=1.):
         """

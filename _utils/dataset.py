@@ -1,10 +1,9 @@
-from operator import add
 import nibabel as nib
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from mri_utils.data_utils import get_voxel_coordenates
-from mri_utils.processing import normalize_data
+from .data_utils import get_voxel_coordenates
+from .processing import normalize_data
 
 
 class MRI_DataPatchLoader(Dataset):

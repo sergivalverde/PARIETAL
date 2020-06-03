@@ -46,7 +46,7 @@ To use PARIETAL as an standalone script, just run =./parietal --help= to see all
 
 **** Mandatory parameters:
 - input_scan (=--input_image=): T1-w nifti image to process
-- out_scan (=--out_name=): Output name for the skull-stripped image
+- output_scan (=--out_name=): Output name for the skull-stripped image
 
 **** Optional parameters:
 - binary threshold (=--threshold=): output threshold used to binarize the skull-stripped image (default=0.5)
@@ -61,9 +61,7 @@ To use PARIETAL as a [[www.python.org][Python]] library, just import the =BrainE
 #+begin_src python
 from brain_extraction import BrainExtraction
 
-b = BrainExtraction(normalize=True,
-                    threshold=0.5,
-                    gpu_number=1)
+b = BrainExtraction()
 
 input_scan = 'tests/example/T1.nii.gz'
 output_scan = 'tests/example/parietal_brainmask.nii.gz'
@@ -73,7 +71,7 @@ output_scan = 'tests/example/parietal_brainmask.nii.gz'
 brainmask = b.run(input_scan, ouput_scan)
 #+end_src
 
-In order to facilitate its use in larger experiments, the method's options can be set by default from a configuration file stored at ='config/config.cfg'. Class declaration arguments overwrite the default configuration:
+In order to facilitate its use in larger experiments, the method's options can be set by default from a configuration file stored at =config/config.cfg=. Class declaration arguments overwrite the default configuration:
 
 #+begin_src python
 [data]
@@ -94,7 +92,7 @@ gpu_number = 0
 The model can run with both GPU or a decent CPU. In most of our experiments, PARIETAL can extract the brain out of T1-w image in less than 10 seconds when using GPU and about 2 minutes when running on the CPU (see performance experiments for a more complete analysis).
 
 *** Docker version:
-In order to reduce the hassle to install all the dependencies in your local machine, we also provide a [[www.docker.com][Docker]] version. Please follow the [[https://docs.docker.com/install/][guide]] to install [[www.docker.com][Docker]] for your operating system. If you are on Linux a want to use the GPU capabilities of your local machine, please be sure that you install the [[https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)][nvidia-docker (version 2.0)]] packages.
+In order to reduce the hassle to install all the dependencies in your local machine, we also provide a [[www.docker.com][Docker]] version. Please follow the [[https://docs.docker.com/install/][guide]] to install [[www.docker.com][Docker]] for your operating system. If you are on Linux and you want to use the GPU capabilities of your local machine, please be sure that you install the [[https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)][nvidia-docker (version 2.0)]] packages.
 
 Once [[www.docker.com][Docker]] is available in your system, install the minimum Python dependencies as:
 
@@ -110,7 +108,7 @@ Then, running PARIETAL is as easy as an standalone script: (note: the first time
 
 **** Mandatory parameters:
 - input_scan (=--input_image=): T1-w nifti image to process
-- out_scan (=--out_name=): Output name for the skull-stripped image
+- output_scan (=--out_name=): Output name for the skull-stripped image
 
 **** Optional parameters:
 - binary threshold (=--threshold=): output threshold used to binarize the skull-stripped image (default=0.5)
