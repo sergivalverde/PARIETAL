@@ -166,7 +166,7 @@ Performance evaluation against the 40 manual masks from the LPBA40 dasaset.  Va
 | *PARIETAL* (Campinas model)          | 97.25 |       96.10 |       98.40 |
 |--------------------------------------+-------+-------------+-------------|
 
-*** OASIS dataset
+*** OASIS dataset:
 
 Similar to the previous datasets, we also show the performance of PARIETAL against the 77 brainmasks of the OASIS dataset. Values for the rest of the methods are extracted from the [[https://doi.org/10.1016/j.artmed.2019.06.008][Lucena et al. 2019]] paper:
 
