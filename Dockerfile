@@ -10,12 +10,14 @@ MAINTAINER Sergi Valverde <svalverde@eia.udg.edu>
 
 USER docker
 RUN mkdir $HOME/data
-ADD base.py $HOME/src/base.py
-ADD dataset.py $HOME/src/dataset.py
-ADD model.py $HOME/src/model.py
+RUN mkdir $HOME/data/input
+RUN mkdir $HOME/data/output
+COPY _utils $HOME/src/_utils
+COPY config $HOME/src/config/
 COPY models $HOME/src/models/
-ADD model_utils.py $HOME/src/model_utils.py
-COPY mri_utils $HOME/src/mri_utils
-ADD run_skull.py $HOME/src/run_skull.py
+ADD model.py $HOME/src/model.py
+ADD __init__.py $HOME/src/__init__.py
+ADD brain_extraction.py $HOME/src/brain_extraction.py
+ADD parietal $HOME/src/parietal
 
 WORKDIR $HOME/data

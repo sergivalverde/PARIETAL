@@ -3,9 +3,9 @@ import nibabel as nib
 import numpy as np
 from configparser import ConfigParser
 from model import Parietal
-from mri_utils.data_utils import reconstruct_image, extract_patches
-from mri_utils.data_utils import get_voxel_coordenates
-from mri_utils.processing import normalize_data
+from _utils.data_utils import reconstruct_image, extract_patches
+from _utils.data_utils import get_voxel_coordenates
+from _utils.processing import normalize_data
 from scipy.ndimage import binary_fill_holes as fill_holes
 from scipy.ndimage import label
 from scipy.ndimage import labeled_comprehension as lc
@@ -49,7 +49,7 @@ class BrainExtraction():
         self.__model_name = opt['model_name'] if model_name is None else model_name
         self.__patch_shape = opt['patch_shape'] if patch_shape is None else patch_shape
         self.__use_gpu = opt['use_gpu'] if use_gpu is None else use_gpu
-        self.__gpu_number = opt['gpu_number'] if gpu_number is None else gpu_number
+        self.__gpu_number = opt['gpu_number'] if gpu_number is None else [gpu_number]
 
         # initialize the model
         self.model = self.__initialize_model()
@@ -278,8 +278,7 @@ class BrainExtraction():
         options = {}
 
         user_config = ConfigParser()
-        # user_config.read(os.path.join(self.path, 'config', 'config.cfg'))
-        user_config.read(os.path.join(self.path, 'config.cfg'))
+        user_config.read(os.path.join(self.path, 'config', 'config.cfg'))
 
         # data options
         options['normalize'] = user_config.getboolean('data', 'normalize')

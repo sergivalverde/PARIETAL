@@ -412,7 +412,7 @@ class Parietal(nn.Module):
         # filename = './models/' + self.model_name
         # print("--------------------------------------------------")
         if os.path.isfile(filename):
-            checkpoint = torch.load(filename, map_location=self.device_name)
+            checkpoint = torch.load(filename, map_location=self.device)
             # check if the network was trained using data parallelism
             if checkpoint['data_parallel']:
                 self.skull_net = nn.DataParallel(self.skull_net)

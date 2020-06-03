@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+
+# --------------------------------------------------
+# PARIETAL: DeeP leArning mRI brain ExTrAction Tool
+#
+# Yet another brain extration tool for MRI
+#
+# Sergi Valverde 2020
+# Docker version
+# --------------------------------------------------
+
+import os
+import argparse
+import time
+import docker
+from pyfiglet import Figlet
+from __init__ import __version__ as version
+
+CURRENT_FOLDER = os.path.dirname(os.path.realpath(__file__))
+
+if __name__ == "__main__":
+
+    # Parse input options
+    parser = argparse.ArgumentParser(
+        description= "PARIETAL: yet another deeP leARnIng brain ExTrAtion tooL")
+    parser.add_argument('--input_scan',
+                        action='store',
+                        help='T1 nifti image to process (mandatory)')
+    parser.add_argument('--output_scan',
+                        action='store',
+                        help='Output nifti for the resulted skull stripped image (mandatory)')
+    parser.add_argument('--threshold',
+                        type=float,
+                        default=0.5,
+                        help='Output threshold to binarize the brainmask (default=0.5)')
+    parser.add_argument('--gpu',
+                        action='store_true',
+                        help='Use GPU for computing (default=false)')
+    parser.add_argument('--gpu_number',
+                        type=int,
+                        default=0,
+                        help='Select the GPU number to use (default=0')
+    # parser.add_argument('--model',
+    #                    default='campinas_baseline',
+    #                    help='Trained model to use (default=campinas baseline)')
+    parser.add_argument('--verbose',
+                        action='store_true',
+                        help='Verbose mode')
+    parser.add_argument('--update',
+                        action='store_true',
+                        help='Update the Docker image')
+
+    opt = parser.parse_args()
+    THRESHOLD = opt.threshold
+    GPU_USE = opt.gpu
+    GPU_NUMBER = opt.gpu_number
+    VERBOSE = opt.verbose
+    UPDATE = opt.update
+    # MODEL_NAME = opt.model
+    # MODEL_PATH = os.path.join(CURRENT_FOLDER, 'models', MODEL_NAME)
+
+    # --------------------------------------------------
+    # Docker image
+    # - update docker image at init
+    #
+    # --------------------------------------------------
+    client = docker.from_env()
+    CONTAINER_IMAGE = 'sergivalverde/parietal:v' + version
+
+    if UPDATE:
+        print('Updating the Docker image')
+        client.images.pull(CONTAINER_IMAGE)
+
+    # --------------------------------------------------
+    # SET PATHS
+    # Convert input path into an absolute path
+    #
+    # DATA_FOLDER: abs path  where the T1-w lives
+    # IMAGE_PATH: abs path to the T1-w image
+    # --------------------------------------------------
+    input_image = opt.input_scan
+    if str.find(input_image, '/') >= 0:
+        if os.path.isabs(input_image):
+            (im_path, im_name) = os.path.split(input_image)
+            INPUT_DATA_PATH = im_path
+            INPUT_IMAGE = im_name
+        else:
+            (im_path, im_name) = os.path.split(input_image)
+            INPUT_DATA_PATH = os.path.join(os.getcwd(), im_path)
+            INPUT_IMAGE = im_name
+    else:
+        INPUT_DATA_PATH = os.getcwd()
+        INPUT_IMAGE = opt.input_scan
+
+    output_image = opt.output_scan
+    if str.find(output_image, '/') >= 0:
+        if os.path.isabs(output_image):
+            (im_path, im_name) = os.path.split(output_image)
+            OUTPUT_DATA_PATH = im_path
+            OUTPUT_IMAGE = im_name
+        else:
+            (im_path, im_name) = os.path.split(output_image)
+            OUTPUT_DATA_PATH = os.path.join(os.getcwd(), im_path)
+            OUTPUT_IMAGE = im_name
+    else:
+        OUTPUT_DATA_PATH = os.getcwd()
+        OUTPUT_IMAGE = opt.output_scan
+
+    # --------------------------------------------------
+    # Docker options
+    # - docker container paths
+    # - volumes to mount
+    # - command
+    # - runtime
+    # --------------------------------------------------
+
+    # docker user
+    UID = str(os.getuid())
+    DOCKER_USER = UID + ':1000'
+    # docker container paths
+    DOCKER_INPUT_DATA_PATH = os.path.join('/home/docker/data', 'input')
+    DOCKER_OUTPUT_DATA_PATH = os.path.join('/home/docker/data', 'output')
+
+    # volumes to mount
+    if INPUT_DATA_PATH == OUTPUT_DATA_PATH:
+        DOCKER_OUTPUT_DATA_PATH = DOCKER_INPUT_DATA_PATH
+        VOLUMES = {INPUT_DATA_PATH: {'bind': DOCKER_INPUT_DATA_PATH, 'mode': 'rw'}}
+    else:
+        VOLUMES = {INPUT_DATA_PATH: {'bind': DOCKER_INPUT_DATA_PATH, 'mode': 'rw'},
+                   OUTPUT_DATA_PATH: {'bind': DOCKER_OUTPUT_DATA_PATH, 'mode': 'rw'}}
+
+    # Skull stripping command
+    COMMAND = '/home/docker/src/parietal' + \
+              ' --input_scan ' + os.path.join(DOCKER_INPUT_DATA_PATH, INPUT_IMAGE) + \
+              ' --output_scan ' + os.path.join(DOCKER_OUTPUT_DATA_PATH, OUTPUT_IMAGE) + \
+              ' --threshold ' + str(THRESHOLD)
+              # ' --model ' + MODEL_NAME
+
+    # --------------------------------------------------
+    # run the container
+    #
+    # The container is stored
+    # --------------------------------------------------
+
+    t = time.time()
+
+    if VERBOSE:
+        f = Figlet(font="slant")
+        print("--------------------------------------------------")
+        print(f.renderText("PARIETAL"))
+        print("Yet another deeP leARnIng brain ExTrAtion tooL")
+        print("(c) Sergi Valverde, 2020")
+        print(" ")
+        print("version", version,  "(Docker)")
+        print("--------------------------------------------------")
+        print(" ")
+        print("Image information:")
+        print("output path:", OUTPUT_DATA_PATH)
+        print("output image:", OUTPUT_IMAGE)
+        print("Binarization threshold:", THRESHOLD)
+        print("Using GPU:", GPU_USE)
+        print("--------------------------------------------------")
+
+    if GPU_USE:
+        GPU_OPTIONS = ' --gpu ' + ' --gpu_number ' + str(GPU_NUMBER)
+        COMMAND += GPU_OPTIONS
+        client.containers.run(image=CONTAINER_IMAGE,
+                              command=COMMAND,
+                              user=DOCKER_USER,
+                              runtime='nvidia',
+                              volumes=VOLUMES)
+    else:
+        client.containers.run(image=CONTAINER_IMAGE,
+                              user=DOCKER_USER,
+                              command=COMMAND,
+                              volumes=VOLUMES)
+    if VERBOSE:
+        print('Computing time: %0.2f' % (time.time() -t))

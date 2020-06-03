@@ -601,30 +601,6 @@ def get_current_path():
     return os.path.dirname(os.path.abspath(__file__))
 
 
-def show_info(options):
-    """
-    Show method information
-    """
-    f = Figlet(font="slant")
-    print("--------------------------------------------------")
-    print(f.renderText("PARIETAL"))
-    print("Yet another deeP leARnIng brain ExTrAtion tooL")
-    print("(c) Sergi Valverde, 2020")
-    print(" ")
-    print("version: v0.2")
-    print("--------------------------------------------------")
-    print(" ")
-    print("Image information:")
-    print("input path: ", options['test_path'])
-    print("input image: ", options['input_data'][0])
-    print("Output image: ", options['out_name'])
-    print("GPU using:", options['use_gpu'])
-    print(" ")
-    print("Model information")
-    print("Model path:", options['model_path'])
-    print("Model name:", options['experiment'])
-    print("--------------------------------------------------")
-
 
 def post_process_skull(input_mask):
     """
