@@ -2,10 +2,10 @@ import os
 import nibabel as nib
 import numpy as np
 from configparser import ConfigParser
-from model import Parietal
-from _utils.data_utils import reconstruct_image, extract_patches
-from _utils.data_utils import get_voxel_coordenates
-from _utils.processing import normalize_data
+from .model import Parietal
+from ._utils.data_utils import reconstruct_image, extract_patches
+from ._utils.data_utils import get_voxel_coordenates
+from ._utils.processing import normalize_data
 from scipy.ndimage import binary_fill_holes as fill_holes
 from scipy.ndimage import label
 from scipy.ndimage import labeled_comprehension as lc

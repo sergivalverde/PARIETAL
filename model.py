@@ -11,8 +11,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-from _utils.model_utils import UpdateStatus, EarlyStopping
-from _utils.model_utils import ResCoreElement, Pooling3D
+from ._utils.model_utils import UpdateStatus, EarlyStopping
+from ._utils.model_utils import ResCoreElement, Pooling3D
 
 
 class ResUnet(nn.Module):
